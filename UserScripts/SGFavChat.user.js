@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        SGFavChat
 // @namespace   https://twitter.com/11powder
-// @description お気に入りのチャットを保存するやつ
+// @description ソラニワのお気に入りのチャットを保存するやつ
 // @include     http://st.x0.to/?mode=chat*
 // @version     1.0.0
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGFavChat.user.js
