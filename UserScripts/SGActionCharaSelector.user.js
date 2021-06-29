@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの各種行動画面のキャラ選択を便利にする
 // @include     http://st.x0.to/?mode=keizoku4*
-// @version     1.0.7
+// @version     1.0.8
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @grant       none
@@ -135,9 +135,9 @@ await (async () => {
     .${skillsClassname} span.marks.marki0+span>span{display:inline-block;}
     .${skillsClassname} span.marks.marki0+span+span{width:calc(10em + 4px)!important;}
     .${docClassname_HiddenEffects} .${skillsClassname} span.marks.marki0+span+span+small+br{display:none;}
-    .${skillsClassname} span.marks.marki0+span+span+small+br+small{display:inline-block;}
+    .${skillsClassname} span.marks.marki0+span+span+small+br+small{display:inline-block;padding-left:calc(2em + 4px);}
     .${docClassname_HiddenEffects} .${skillsClassname} span.marks.marki0+span+span+small+br+small{display:none;}
-    .${skillsClassname} span.marks.marki0+span+span+small+br+small>span:first-child{padding-left:calc(2em + 4px)!important;}
+    .${skillsClassname} span.marks.marki0+span+span+small+br+small>span:first-child{padding-left:0!important;}
     .${singleSkillClassname_NoCondition}{opacity:0.6;}
     .sgbutton{
         padding: 3px;
