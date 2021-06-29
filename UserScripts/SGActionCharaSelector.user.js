@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの各種行動画面のキャラ選択を便利にする
 // @include     http://st.x0.to/?mode=keizoku4*
-// @version     1.0.6
+// @version     1.0.7
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @grant       none
@@ -133,7 +133,7 @@ await (async () => {
     .${skillsClassname}{font-size:small;}
     .${skillsClassname} span.marks.marki0{width:2em;}
     .${skillsClassname} span.marks.marki0+span>span{display:inline-block;}
-    .${skillsClassname} span.marks.marki0+span+span{width:11em!important;}
+    .${skillsClassname} span.marks.marki0+span+span{width:calc(10em + 4px)!important;}
     .${docClassname_HiddenEffects} .${skillsClassname} span.marks.marki0+span+span+small+br{display:none;}
     .${skillsClassname} span.marks.marki0+span+span+small+br+small{display:inline-block;}
     .${docClassname_HiddenEffects} .${skillsClassname} span.marks.marki0+span+span+small+br+small{display:none;}
