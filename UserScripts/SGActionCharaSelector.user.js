@@ -2,12 +2,14 @@
 // @name        SGActionCharaSelector
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの各種行動画面のキャラ選択を便利にする
-// @include     http://st.x0.to/?mode=keizoku4*
-// @version     1.0.8
+// @include     /^http:\/\/st\.x0\.to\/\?mode=keizoku(?:0|4)(&.*)?$/
+// @version     1.0.9
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @grant       none
 // ==/UserScript==
+//
+// v1.0.9 -> 対象を基本宣言に拡張した。
 
 await (async () => {
     const skillsClassname = "charaskills";
@@ -102,7 +104,7 @@ await (async () => {
     }
 
     function enableToggleOfSkillEffects() {
-        const $button = $("<span class='sgbutton' style='margin-top:2px;'/>").appendTo($(".charaframe2.charaframeself").prev("p"));
+        const $button = $("<span class='sgbutton' style='margin-top:4px;'/>").appendTo($(".charaframe2.charaframeself").prev("p"));
         const toOnText = "スキル効果を表示する";
         const toOffText = "スキル効果の表示を消す";
 
@@ -140,6 +142,7 @@ await (async () => {
     .${skillsClassname} span.marks.marki0+span+span+small+br+small>span:first-child{padding-left:0!important;}
     .${singleSkillClassname_NoCondition}{opacity:0.6;}
     .sgbutton{
+        display: inline-block;
         padding: 3px;
         padding-left: 12px;
         padding-right: 12px;
