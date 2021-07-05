@@ -2,92 +2,99 @@
 // @name        SGIconSwapper
 // @namespace   https://twitter.com/11powder
 // @description キャラ設定でアイコンを入れ替えられるようにする
-// @include     http://st.x0.to/?mode=keizoku3*
-// @version     1.0.0
+// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku3(&.*)?)?$/
+// @version     1.0.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGIconSwapper.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGIconSwapper.user.js
 // @grant       none
 // ==/UserScript==
+//
+// v1.0.1 -> 送信後にスクリプトが無効化される不具合に対処。
 
 (() => {
-	// 最初以外の.label
-	const $labels = $("input[name*='icon'][name$='c']+br+span.label");
-	const $conts = $labels.first().parent().contents();
+    const $targetSubtitle = $("h2.subtitle").filter((i, e) => e.innerHTML === "キャラクター設定");
+    if ($targetSubtitle.length === 0) {
+        return;
+    }
 
-	if ($labels.length < 2) {
-		return;
-	}
+    // 最初以外の.label
+    const $labels = $("input[name*='icon'][name$='c']+br+span.label");
+    const $conts = $labels.first().parent().contents();
 
-	const idxsExcfirst = $labels.get().map((e, i) => {
-		return $conts.index(e);
-	});
+    if ($labels.length < 2) {
+        return;
+    }
 
-	const width = idxsExcfirst[1] - idxsExcfirst[0];
-	const begin = idxsExcfirst[0] - width;
+    const idxsExcfirst = $labels.get().map((e, i) => {
+        return $conts.index(e);
+    });
 
-	const idxs = [begin].concat(idxsExcfirst);
+    const width = idxsExcfirst[1] - idxsExcfirst[0];
+    const begin = idxsExcfirst[0] - width;
 
-	const $iconCntSets = idxs.map((b, i) => {
-		return $conts.slice(b, b + width);
-	});
-	$iconCntSets.forEach(($e, i) => {
-		$e.wrapAll(`<span class="iconrow" data-index="${i}"/>`);
-	});
+    const idxs = [begin].concat(idxsExcfirst);
 
-	const iconCount = $iconCntSets.length;
-	$(".iconrow").prepend("<span><i class='spinnerup'>↑</i><i class='spinnerdown'>↓</i></span>");
+    const $iconCntSets = idxs.map((b, i) => {
+        return $conts.slice(b, b + width);
+    });
+    $iconCntSets.forEach(($e, i) => {
+        $e.wrapAll(`<span class="iconrow" data-index="${i}"/>`);
+    });
 
-	$(".spinnerup").on("click", function() {
-		const $row = $(this).parent().parent();
-		const index = $row.data("index");
-		if (index === 0) {
-			return;
-		}
+    const iconCount = $iconCntSets.length;
+    $(".iconrow").prepend("<span><i class='spinnerup'>↑</i><i class='spinnerdown'>↓</i></span>");
 
-		const $prevInputs = $row.prev(".iconrow").children("input");
-		if ($prevInputs.length === 0) {
-			return;
-		}
+    $(".spinnerup").on("click", function() {
+        const $row = $(this).parent().parent();
+        const index = $row.data("index");
+        if (index === 0) {
+            return;
+        }
 
-		const $inputs = $(this).parent().siblings("input");
-		const nameTemp = $inputs.eq(0).val();
-		$inputs.eq(0).val($prevInputs.eq(0).val());
-		$prevInputs.eq(0).val(nameTemp);
+        const $prevInputs = $row.prev(".iconrow").children("input");
+        if ($prevInputs.length === 0) {
+            return;
+        }
 
-		const urlTemp = $inputs.eq(1).val();
-		$inputs.eq(1).val($prevInputs.eq(1).val());
-		$prevInputs.eq(1).val(urlTemp);
+        const $inputs = $(this).parent().siblings("input");
+        const nameTemp = $inputs.eq(0).val();
+        $inputs.eq(0).val($prevInputs.eq(0).val());
+        $prevInputs.eq(0).val(nameTemp);
 
-		const speakerTemp = $inputs.eq(2).val();
-		$inputs.eq(2).val($prevInputs.eq(2).val());
-		$prevInputs.eq(2).val(speakerTemp);
-	});
+        const urlTemp = $inputs.eq(1).val();
+        $inputs.eq(1).val($prevInputs.eq(1).val());
+        $prevInputs.eq(1).val(urlTemp);
 
-	$(".spinnerdown").on("click", function() {
-		const $row = $(this).parent().parent();
-		const index = $row.data("index");
-		if (index === iconCount - 1) {
-			return;
-		}
+        const speakerTemp = $inputs.eq(2).val();
+        $inputs.eq(2).val($prevInputs.eq(2).val());
+        $prevInputs.eq(2).val(speakerTemp);
+    });
 
-		const $nextInputs = $row.next(".iconrow").children("input");
-		if ($nextInputs.length === 0) {
-			return;
-		}
+    $(".spinnerdown").on("click", function() {
+        const $row = $(this).parent().parent();
+        const index = $row.data("index");
+        if (index === iconCount - 1) {
+            return;
+        }
 
-		const $inputs = $(this).parent().siblings("input");
-		const nameTemp = $inputs.eq(0).val();
-		$inputs.eq(0).val($nextInputs.eq(0).val());
-		$nextInputs.eq(0).val(nameTemp);
+        const $nextInputs = $row.next(".iconrow").children("input");
+        if ($nextInputs.length === 0) {
+            return;
+        }
 
-		const urlTemp = $inputs.eq(1).val();
-		$inputs.eq(1).val($nextInputs.eq(1).val());
-		$nextInputs.eq(1).val(urlTemp);
+        const $inputs = $(this).parent().siblings("input");
+        const nameTemp = $inputs.eq(0).val();
+        $inputs.eq(0).val($nextInputs.eq(0).val());
+        $nextInputs.eq(0).val(nameTemp);
 
-		const speakerTemp = $inputs.eq(2).val();
-		$inputs.eq(2).val($nextInputs.eq(2).val());
-		$nextInputs.eq(2).val(speakerTemp);
-	});
+        const urlTemp = $inputs.eq(1).val();
+        $inputs.eq(1).val($nextInputs.eq(1).val());
+        $nextInputs.eq(1).val(urlTemp);
+
+        const speakerTemp = $inputs.eq(2).val();
+        $inputs.eq(2).val($nextInputs.eq(2).val());
+        $nextInputs.eq(2).val(speakerTemp);
+    });
 
     $("<style type='text/css'/>").html(
 `.spinnerup,.spinnerdown{
@@ -101,4 +108,3 @@
     cursor: pointer;
 }`).appendTo("head");
 })();
-

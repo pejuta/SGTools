@@ -2,16 +2,21 @@
 // @name        SGActionCharaSelector
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの各種行動画面のキャラ選択を便利にする
-// @include     /^http:\/\/st\.x0\.to\/\?mode=keizoku(?:0|4)(&.*)?$/
-// @version     1.0.9
+// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku(?:0|4)(&.*)?)?$/
+// @version     1.0.10
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @grant       none
 // ==/UserScript==
 //
-// v1.0.9 -> 対象を基本宣言に拡張した。
+// v1.0.10 -> エラー送信後にスクリプトが無効化される一部不具合を修正。
 
 await (async () => {
+    const $targetSubtitle = $("h2.subtitle").filter((i, e) => e.innerHTML === "基本宣言" || e.innerHTML === "花壇の管理");
+    if ($targetSubtitle.length === 0) {
+        return;
+    }
+
     const skillsClassname = "charaskills";
     const singleSkillClassname = "charasingleskill";
     const docClassname_HiddenEffects = "hiddeneffects";
