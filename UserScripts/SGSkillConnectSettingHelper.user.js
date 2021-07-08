@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘画面で、コネクトスキル・エミットスキルの設定を便利にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.0
+// @version     1.0.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillConnectSettingHelper.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillConnectSettingHelper.user.js
 // @grant       none
@@ -53,11 +53,7 @@
             updateSkillLabel($label, id);
         });
 
-        const selectVal = $select.val();
-        if (!selectVal) {
-            return;
-        }
-        $skillSelects.eq(parseInt(selectVal, 10) - 1).trigger("change");
+        $select.trigger("change");
     }
 
     function updateSkillLabel($label, /* optional */ skillId) {
