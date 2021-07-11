@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットにキャラクター個人のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=chat(&.*)?)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.0
+// @version     1.0.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -64,7 +64,20 @@
             const table = db.transaction([tableName], "readwrite").objectStore(tableName);
             const request = table.put(item);
             request.onerror = (e) => {
-                rej("failed to put on table");
+                rej("failed to put an item on table");
+            };
+            request.onsuccess = (e) => {
+                res(e.target.result);
+            };
+        });
+    }
+
+    function dbDelete(db, tableName, key) {
+        return new Promise((res, rej) => {
+            const table = db.transaction([tableName], "readwrite").objectStore(tableName);
+            const request = table.delete(key);
+            request.onerror = (e) => {
+                rej("failed to delete an item on table");
             };
             request.onsuccess = (e) => {
                 res(e.target.result);
@@ -103,6 +116,17 @@
         appendTimelineButton(newTarget);
     }
 
+    async function confirmThenRemoveTimelineButton(db, $rmvButton) {
+        const targetId = $rmvButton.prev().html();
+        const res = confirm(`タイムライン表示ボタン[ ${targetId} ]を削除します。`);
+        if (!res) {
+            return;
+        }
+        const eno = $rmvButton.data("eno");
+        removeTimelineButton(eno);
+        await dbDelete(db, DB_TABLE_NAME, eno);
+    }
+
     function appendTimelineButton(target) {
         let arr;
         if (Array.isArray(target)) {
@@ -114,17 +138,21 @@
         const descendingTargets = arr.slice();
         descendingTargets.sort((a, b) => b.eno - a.eno);
 
-        const $lastRoom = $("a > .roomname").last();
+        const $lastRoom = $("a > .roomname").last().parent();
 
         // eno降順に末尾に追加するので結果的に昇順になる
         descendingTargets.forEach((target) => {
-            const html = ` <a href="./?mode=chat&list=5&chara=${target.eno}"><span class="roomname">ENo.${target.eno} ${target.name}</span></a>`;
+            const html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink"><span class="roomname">ENo.${target.eno} ${target.name}</span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
             // TODO: appendTo
             $lastRoom.after(html);
-        })
+        });
     }
+    function removeTimelineButton(eno) {
+        $(`#roome${eno}`).remove();
+    }
+
     function $appendAddNewTimelineButton() {
-        const $lastRoom = $("a > .roomname").last();
+        const $lastRoom = $("a > .roomname").last().parent();
         const html = ` <a href="#" onclick="return false;"><span class="addnewtimeline">＋</span></a>`;
         $lastRoom.after(html);
         return $(".addnewtimeline");
@@ -135,6 +163,10 @@
         appendTimelineButton(targets);
         const $addNewButton = $appendAddNewTimelineButton();
         $addNewButton.on("click", inputThenAddNewTimelineButton);
+        $(document).on("click", ".removetlbutton", async function (e) {
+            e.preventDefault();
+            await confirmThenRemoveTimelineButton(db, $(this));
+        })
     }
 
     async function updateTargetDataOfCurrentPage(db) {
@@ -164,14 +196,28 @@
     if (currentPage == "chat") {
         await initButtons(db);
         $(document.head).append(`<style type="text/css">
-.addnewtimeline{
+.roomlink {
+    position: relative;
+}
+.addnewtimeline {
     display: inline-block;
     cursor: pointer;
     padding: 2px 6px;
-    color: #cc5533;
     box-shadow: 2px 0px 3px #00000066;
     background-color: #cceeff;
     color: #333333;
+}
+.removetlbutton:after {
+    content: "✕";
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    position: absolute;
+    right: 8px;
+    top: -6px;
+    line-height: 100%;
+    color: #cc5533;
+    border: 1px solid #bbb099;
 }
 .roomname{
     margin-bottom: 4px;
