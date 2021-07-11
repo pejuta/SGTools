@@ -13,7 +13,7 @@
 (async function() {
     'use strict';
 
-    const DB_NAME = "SGTools_AddUserTimeline";
+    const DB_NAME = "SGTools_AddUserTimelines";
     const DB_TABLE_NAME = "targets";
 
     function openSingleTableDB(dbName, tableName, tableSettings) {
