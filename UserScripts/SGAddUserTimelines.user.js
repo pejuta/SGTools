@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットにキャラクター個人のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=chat(&.*)?)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.1
+// @version     1.0.2
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -29,7 +29,7 @@
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 db.createObjectStore(tableName, tableSettings);
-            }
+            };
         });
     }
 
@@ -88,13 +88,36 @@
     const _vDoc = document.implementation.createHTMLDocument();
     async function fetchCharaName(eno) {
         const url = `http://st.x0.to/?mode=profile&eno=${eno}`;
-        const html = await (await fetch(url)).text();
+        const req = await fetch(url);
+        if (!req.ok) {
+            return null;
+        }
+        const html = await req.text();
 
-        return extractNicknameFromProfile($(html, _vDoc));
+        return extractNameFromProfile($(html, _vDoc));
     }
-    async function extractNicknameFromProfile($doc) {
-        return $doc.find(".cdatar > .cdatal").find("img:first").attr("cname") || "";
+    // 優先度はNickname > Fullname
+    async function extractNameFromProfile($doc) {
+        const $firstIcon = $doc.find(".cdatar > .cdatal").find("img:first");
+
+        let nickname = "";
+        if ($firstIcon.length === 1) {
+            nickname = $firstIcon.attr("cname") || "";
+        }
+
+        if (nickname) {
+            return nickname;
+        }
+
+        const $profile = $doc.find(".profile > .inner_boardclip");
+        if ($profile.length === 1) {
+            const id = $profile.html().trim();
+            return id.substr(id.indexOf("　") + 1);
+        }
+
+        return null;
     }
+
     function extractEnoFromTitle() {
         const m = /^ENo\.(\d+)/i.exec(document.title);
         if (!m) {
@@ -111,6 +134,10 @@
         }
         const eno = parseInt(m[0], 10);
         const name = await fetchCharaName(eno);
+        if (name === null) {
+            alert("通信に失敗したか、キャラが存在しないようです。");
+            return;
+        }
         const newTarget = { eno, name };
         await dbPut(db, DB_TABLE_NAME, newTarget);
         appendTimelineButton(newTarget);
@@ -176,7 +203,7 @@
         }
         const targetEnos = await dbGetAllKeys(db, DB_TABLE_NAME);
         if (targetEnos.indexOf(eno) !== 1) {
-            const name = await extractNicknameFromProfile($(document));
+            const name = await extractNameFromProfile($(document));
             await dbPut(db, DB_TABLE_NAME, { eno, name });
         }
     }
