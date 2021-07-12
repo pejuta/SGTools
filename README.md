@@ -19,10 +19,7 @@
 
 - [SGFavChat](https://pejuta.github.io/SGTools/UserScripts/SGFavChat.user.js)
 > チャットを【お気に入り】として保存することが出来るようにする。（Twitterのふぁぼに近しい機能を追加する。）
-
-- [SGChatHelper](https://pejuta.github.io/SGTools/UserScripts/SGChatHelper.user.js)
-> チャットのタグ入力補助を行う。
-
+> 
 - [SGChatHelper](https://pejuta.github.io/SGTools/UserScripts/SGChatHelper.user.js)
 > チャットのタグ入力補助を行う。
 
