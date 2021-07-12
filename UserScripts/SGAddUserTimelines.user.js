@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットにキャラクター個人のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=chat(&.*)?)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.5
+// @version     1.0.6
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -31,13 +31,13 @@
                 const db = e.target.result;
                 const tx = e.target.transaction;
 
-                let table;
-                if (e.oldVersion === e.newVersion) {
-                    // creation
-                    table = db.createObjectStore(tableName, tableSettings);
-                } else {
-                    table = tx.objectStore(tableName);
-                }
+                let table = db.createObjectStore(tableName, tableSettings);
+                // if (e.oldVersion === e.newVersion) {
+                //     // creation
+                //     table = db.createObjectStore(tableName, tableSettings);
+                // } else {
+                //     table = tx.objectStore(tableName);
+                // }
             };
         });
     }
