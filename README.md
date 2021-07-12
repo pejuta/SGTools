@@ -7,6 +7,11 @@
 - [SGEmphasizeNewFavs](https://pejuta.github.io/SGTools/UserScripts/SGEmphasizeNewFavs.user.js)
 > お気に入りが増えたときに、誰が増えたのかをハイライト表示するようにする。
 
+### 各種行動
+- [SGActionCharaSelector](https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js)
+> 行動に連れ出す人のスキル構成が見えるようになる。  
+> 連れ出す人の枠を再クリックすることで、その人を選択から外せるようにする。
+
 ### チャット関連
 - [SGAddUserTimelines](https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js)
 > 任意のキャラクターのタイムライン(発言一覧)を追加できるようにする。  
@@ -17,6 +22,12 @@
 
 - [SGChatHelper](https://pejuta.github.io/SGTools/UserScripts/SGChatHelper.user.js)
 > チャットのタグ入力補助を行う。
+
+- [SGChatHelper](https://pejuta.github.io/SGTools/UserScripts/SGChatHelper.user.js)
+> チャットのタグ入力補助を行う。
+
+- [SGAddListChatBanner](https://pejuta.github.io/SGTools/UserScripts/SGAddListChatBanner.user.js)
+> 左ナビゲーションバーにチャット（リスト）へのバナーを追加する。
 
 ### 各種設定
 - [SGIconSwapper](https://pejuta.github.io/SGTools/UserScripts/SGIconSwapper.user.js)
