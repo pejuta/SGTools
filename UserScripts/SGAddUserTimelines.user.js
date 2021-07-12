@@ -2,13 +2,15 @@
 // @name        SGAddUserTimelines
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのチャットにキャラクター個人のタイムラインを追加する
-// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=chat(&.*)?)?$/
+// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=chat(?:&.*)?|index.php)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.7
+// @version     1.0.8
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
 // ==/UserScript==
+//
+// ver 1.0.8 -> フォーム送信後にボタンが表示されない不具合の修正
 
 (async function() {
     'use strict';
