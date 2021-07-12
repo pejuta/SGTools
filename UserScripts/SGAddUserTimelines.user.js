@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットにキャラクター個人のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=chat(&.*)?)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.4
+// @version     1.0.5
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -15,10 +15,11 @@
 
     const DB_NAME = "SGTools_AddUserTimelines";
     const DB_TABLE_NAME = "targets";
+    const DB_VERSION = 1;
 
-    function openSingleTableDB(dbName, tableName, tableSettings) {
+    function openSingleTableDB(dbName, tableName, tableSettings, version) {
         return new Promise((res, rej) => {
-            const request = indexedDB.open(dbName);
+            const request = indexedDB.open(dbName, version);
             request.onerror = (e) => {
                 rej("failed to open db");
             };
@@ -28,7 +29,15 @@
 
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
-                db.createObjectStore(tableName, tableSettings);
+                const tx = e.target.transaction;
+
+                let table;
+                if (e.oldVersion === e.newVersion) {
+                    // creation
+                    table = db.createObjectStore(tableName, tableSettings);
+                } else {
+                    table = tx.objectStore(tableName);
+                }
             };
         });
     }
@@ -86,7 +95,7 @@
     }
 
     const _vDoc = document.implementation.createHTMLDocument();
-    async function fetchCharaName(eno) {
+    async function fetchCharaInfo(eno) {
         const url = `http://st.x0.to/?mode=profile&eno=${eno}`;
         const req = await fetch(url);
         if (!req.ok) {
@@ -94,11 +103,13 @@
         }
         const html = await req.text();
 
-        return extractNameFromProfile($(html, _vDoc));
+        return extractInfoFromProfile($(html, _vDoc));
     }
     // 優先度はNickname > Fullname
-    async function extractNameFromProfile($doc) {
+    async function extractInfoFromProfile($doc) {
         const $firstIcon = $doc.find(".cdatar > .cdatal").find("img:first");
+
+        const icon = $firstIcon.attr("src");
 
         let nickname = "";
         if ($firstIcon.length === 1) {
@@ -106,13 +117,14 @@
         }
 
         if (nickname) {
-            return nickname;
+            return { icon, name: nickname };
         }
 
         const $profile = $doc.find(".profile > .inner_boardclip");
         if ($profile.length === 1) {
             const id = $profile.html().trim();
-            return id.substr(id.indexOf("　") + 1);
+            const fullname = id.substr(id.indexOf("　") + 1);
+            return { icon, name: fullname };
         }
 
         return null;
@@ -133,18 +145,19 @@
             return;
         }
         const eno = parseInt(m[0], 10);
-        const name = await fetchCharaName(eno);
-        if (name === null) {
+        const info = await fetchCharaInfo(eno);
+        if (!info) {
             alert("通信に失敗したか、キャラが存在しないようです。");
             return;
         }
-        const newTarget = { eno, name };
+        const newTarget = { eno, name: info.name, icon: info.icon };
         await dbPut(db, DB_TABLE_NAME, newTarget);
         appendTimelineButton(newTarget);
     }
 
     async function confirmThenRemoveTimelineButton(db, $rmvButton) {
-        const targetId = $rmvButton.prev().html();
+        const $targetElem = $rmvButton.prev();
+        const targetId = $targetElem.children("img").attr("title") || $targetElem.html();
         const res = confirm(`タイムライン表示ボタン[ ${targetId} ]を削除します。`);
         if (!res) {
             return;
@@ -169,7 +182,12 @@
 
         // eno降順に末尾に追加するので結果的に昇順になる
         descendingTargets.forEach((target) => {
-            const html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink"><span class="roomname">${target.name}(${target.eno})</span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
+            let html;
+            if (target.icon) {
+                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink iconlabel"><span class="roomname"><img src="${target.icon}" title="${target.name}(${target.eno})"></span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
+            } else {
+                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink"><span class="roomname">${target.name}(${target.eno})</span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
+            }
             // TODO: appendTo
             $lastRoom.after(html);
         });
@@ -193,7 +211,7 @@
         $(document).on("click", ".removetlbutton", async function (e) {
             e.preventDefault();
             await confirmThenRemoveTimelineButton(db, $(this));
-        })
+        });
     }
 
     async function updateTargetDataOfCurrentPage(db) {
@@ -203,8 +221,8 @@
         }
         const targetEnos = await dbGetAllKeys(db, DB_TABLE_NAME);
         if (targetEnos.indexOf(eno) !== -1) {
-            const name = await extractNameFromProfile($(document));
-            await dbPut(db, DB_TABLE_NAME, { eno, name });
+            const info = await extractInfoFromProfile($(document));
+            await dbPut(db, DB_TABLE_NAME, { eno, name: info.name, icon: info.icon });
         }
     }
 
@@ -219,7 +237,7 @@
         return;
     }
 
-    const db = await openSingleTableDB(DB_NAME, DB_TABLE_NAME, { keyPath: "eno" });
+    const db = await openSingleTableDB(DB_NAME, DB_TABLE_NAME, { keyPath: "eno" }, DB_VERSION);
     if (currentPage == "chat") {
         await initButtons(db);
         $(document.head).append(`<style type="text/css">
@@ -237,17 +255,29 @@
 .removetlbutton:after {
     content: "✕";
     display: inline-block;
-    width: 1em;
-    height: 1em;
+    width: 0.8em;
+    height: 0.8em;
     position: absolute;
     right: 8px;
     top: -6px;
     line-height: 100%;
     color: #cc5533;
     border: 1px solid #bbb099;
+    background-color: rgba(255,255,255,0.8);
 }
 .roomname{
     margin-bottom: 4px;
+}
+.iconlabel .roomname{
+    padding: 0;
+    padding-left: 0;
+    padding-right: 1px;
+    vertical-align: top;
+    min-width: auto;
+}
+.iconlabel img{
+    width: calc(1em + 22px);
+    height: calc(1em + 22px);
 }
 </style>`);
     } else if (currentPage == "profile") {
