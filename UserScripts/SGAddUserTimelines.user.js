@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットに任意のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=(?:chat|cdel)(?:&.*)?|index.php)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.10
+// @version     1.0.11
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -225,18 +225,17 @@
         $(`#roome${eno}`).remove();
     }
 
-
     async function addNewSearchTimelineButton(db) {
         const $form = $(".mainarea > .sheet:first form");
-        const mode = $form.children("input[name='mode']:first").val() || "";
-        const list = $form.children("input[name='list']:first").val() || "";
-        const room = $form.children("input[name='room']:first").val() || "";
-        const filtereno = $form.children("input[name='filtereno']:first").val() || "";
-        const keyword = $form.children("input[name='keyword']:first").val() || "";
+        const mode = $form.children("[name='mode']:first").val() || "";
+        const list = $form.children("[name='list']:first").val() || "";
+        const room = $form.children("[name='room']:first").val() || "";
+        const filtereno = $form.children("[name='filtereno']:first").val() || "";
+        const keyword = $form.children("[name='keyword']:first").val() || "";
 
         let rootid = "";
         const $logSavingModeButton = $(".roomnameplace");
-        if ($logSavingModeButton.length === 1) {
+        if (list === "3" && $logSavingModeButton.length === 1) {
             const m = /&rootid=(\d+)/.exec($logSavingModeButton.parent("a").attr("href"));
             rootid = m ? m[1] : "";
         }
