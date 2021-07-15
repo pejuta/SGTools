@@ -1,27 +1,53 @@
 // ==UserScript==
 // @name        SGAddUserTimelines
 // @namespace   https://twitter.com/11powder
-// @description Stroll Greenのチャットにキャラクター個人のタイムラインを追加する
-// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=chat(?:&.*)?|index.php)?$/
+// @description Stroll Greenのチャットに任意のタイムラインを追加する
+// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=(?:chat|cdel)(?:&.*)?|index.php)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.9
+// @version     1.0.10
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
 // ==/UserScript==
 //
-// ver 1.0.8 -> フォーム送信後にボタンが表示されない不具合の修正
+// ver 1.0.10 -> チャット削除後にボタンが表示されない不具合の修正
+//            -> 検索タイムライン機能の追加
 
 (async function() {
     'use strict';
 
     const DB_NAME = "SGTools_AddUserTimelines";
-    const DB_TABLE_NAME = "targets";
-    const DB_VERSION = 1;
+    const DB_TABLE_NAME_PLAYER = "targets";
+    const DB_TABLE_NAME_WORD = "searches";
+    const DB_VERSION = 2;
 
-    function openSingleTableDB(dbName, tableName, tableSettings, version) {
+    class SearchQuery {
+        constructor(mode, list, room, filtereno, keyword, rootid) {
+            this.mode = mode;
+            this.list = list;
+            this.room = room;
+            this.filtereno = filtereno;
+            this.keyword = keyword;
+            this.rootid = rootid;
+        }
+
+        toString() {
+            return `mode=${this.mode}&list=${this.list}&room=${encodeURIComponent(this.room)}&filtereno=${this.filtereno}&keyword=${encodeURIComponent(this.keyword)}&rootid=${this.rootid}`;
+        }
+
+        static parse(query) {
+            const re = /mode=([^&]*)&list=([^&]*)&room=([^&]*)&filtereno=([^&]*)&keyword=([^&]*)&rootid=([^&]*)/;
+            const m = re.exec(query);
+            if (!m) {
+                return null;
+            }
+            return new SearchQuery(m[1], m[2], decodeURIComponent(m[3]), m[4], decodeURIComponent(m[5]), m[6]);
+        }
+    }
+
+    function openDB() {
         return new Promise((res, rej) => {
-            const request = indexedDB.open(dbName, version);
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onerror = (e) => {
                 rej("failed to open db");
             };
@@ -33,8 +59,14 @@
                 const db = e.target.result;
                 const tx = e.target.transaction;
 
-                //TODO: fix this if you change version
-                let table = db.createObjectStore(tableName, tableSettings);
+                if (!e.oldVersion) {
+                    db.createObjectStore(DB_TABLE_NAME_PLAYER, { keyPath: "eno" });
+                }
+                if (e.oldVersion < 2) {
+                    // 5列unique indexは効率が極めて悪いので文字列化して投入することにした。
+                    const wordTable = db.createObjectStore(DB_TABLE_NAME_WORD, { keyPath: "id", autoIncrement: true });
+                    wordTable.createIndex("query", "query", { unique: true });
+                }
             };
         });
     }
@@ -135,7 +167,7 @@
         return parseInt(m[1], 10);
     }
 
-    async function inputThenAddNewTimelineButton() {
+    async function inputThenAddNewUserTimelineButton(db) {
         const userTxt = prompt("対象キャラクターのENo.を入力してください。タイムラインを新規追加します。");
         const m = /\d+/.exec(userTxt);
         if (!m) {
@@ -148,23 +180,23 @@
             return;
         }
         const newTarget = { eno, name: info.name, icon: info.icon };
-        await dbPut(db, DB_TABLE_NAME, newTarget);
-        appendTimelineButton(newTarget);
+        await dbPut(db, DB_TABLE_NAME_PLAYER, newTarget);
+        appendUserTimelineButton(newTarget);
     }
 
-    async function confirmThenRemoveTimelineButton(db, $rmvButton) {
+    async function confirmThenRemoveUserTimeline(db, $rmvButton) {
         const $targetElem = $rmvButton.prev();
         const targetId = $targetElem.children("img").attr("title") || $targetElem.html();
-        const res = confirm(`タイムライン表示ボタン[ ${targetId} ]を削除します。`);
+        const res = confirm(`ユーザータイムライン[ ${targetId} ]を削除します。`);
         if (!res) {
             return;
         }
         const eno = $rmvButton.data("eno");
-        removeTimelineButton(eno);
-        await dbDelete(db, DB_TABLE_NAME, eno);
+        removeUserTimelineButton(eno);
+        await dbDelete(db, DB_TABLE_NAME_PLAYER, eno);
     }
 
-    function appendTimelineButton(target) {
+    function appendUserTimelineButton(target) {
         let arr;
         if (Array.isArray(target)) {
             arr = target;
@@ -181,33 +213,151 @@
         descendingTargets.forEach((target) => {
             let html;
             if (target.icon) {
-                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink iconlabel"><span class="roomname"><img src="${target.icon}" title="${target.name}(${target.eno})"></span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
+                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink usertl iconlabel"><span class="roomname"><img src="${target.icon}" title="${target.name}(${target.eno})"></span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
             } else {
-                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink"><span class="roomname">${target.name}(${target.eno})</span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
+                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink usertl"><span class="roomname">${target.name}(${target.eno})</span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
             }
             // TODO: appendTo
             $lastRoom.after(html);
         });
     }
-    function removeTimelineButton(eno) {
+    function removeUserTimelineButton(eno) {
         $(`#roome${eno}`).remove();
     }
 
-    function $appendAddNewTimelineButton() {
+
+    async function addNewSearchTimelineButton(db) {
+        const $form = $(".mainarea > .sheet:first form");
+        const mode = $form.children("input[name='mode']:first").val() || "";
+        const list = $form.children("input[name='list']:first").val() || "";
+        const room = $form.children("input[name='room']:first").val() || "";
+        const filtereno = $form.children("input[name='filtereno']:first").val() || "";
+        const keyword = $form.children("input[name='keyword']:first").val() || "";
+
+        let rootid = "";
+        const $logSavingModeButton = $(".roomnameplace");
+        if ($logSavingModeButton.length === 1) {
+            const m = /&rootid=(\d+)/.exec($logSavingModeButton.parent("a").attr("href"));
+            rootid = m ? m[1] : "";
+        }
+        const query = new SearchQuery(mode, list, room, filtereno, keyword, rootid);
+
+        let id = 0;
+        try {
+            id = await dbPut(db, DB_TABLE_NAME_WORD, { query: query.toString() });
+        } catch (e) {
+            // 重複。
+            return;
+        }
+        appendSearchTimelineButton({ id, query });
+    }
+
+    async function confirmThenRemoveSearchTimeline(db, $rmvButton) {
+        const $targetElem = $rmvButton.prev();
+        const targetText = $targetElem.text();
+        const res = confirm(`検索タイムライン[ ${targetText} ]を削除します。`);
+        if (!res) {
+            return;
+        }
+        const id = $rmvButton.data("id");
+        removeSearchTimelineButton(id);
+        await dbDelete(db, DB_TABLE_NAME_WORD, id);
+    }
+
+    function appendSearchTimelineButton(target) {
+        let arr;
+        if (Array.isArray(target)) {
+            arr = target;
+        } else {
+            arr = [target];
+        }
+
+        const descendingTargets = arr.slice();
+        descendingTargets.sort((a, b) => b.id - a.id);
+
         const $lastRoom = $("a > .roomname").last().parent();
-        const html = ` <a href="#" onclick="return false;"><span class="addnewtimeline">＋</span></a>`;
+
+        // eno降順に末尾に追加するので結果的に昇順になる
+        descendingTargets.forEach((t) => {
+            let query;
+            if (typeof t.query === "string") {
+                query = SearchQuery.parse(t.query);
+            } else {
+                query = t.query
+            }
+
+            let listText;
+            switch(query.list) {
+                case "0": // all
+                    listText = "全て";
+                    break;
+                case "1": // tl
+                    listText = "タイムライン";
+                    break;
+                case "2": // res
+                    listText = "返信";
+                    break;
+                case "3": // tree
+                    listText = "発言ツリー" + query.rootid;
+                    break;
+                case "4": // self
+                    listText = "自分";
+                    break;
+                case "5": // user
+                    listText = "ユーザー";
+                    break;
+                case "6": // room
+                    listText = "周辺：" + query.room;
+                    break;
+                case "7": // message
+                    listText = "メッセージ";
+                    break;
+                case "8": // list
+                    listText = "リスト";
+                    break;
+            }
+
+            const labelHtmls = `<div class="wsroom">at:${listText}</div> <div class="wsquery">${query.filtereno ? `from:${query.filtereno} ` : ""}${query.keyword}</div>`;
+            const html = ` <a href="./?${query.toString()}" id="roomws${t.id}" class="roomlink wstl"><i class="searchicon"></i><span class="roomname">${labelHtmls}</span><i class="removetlbutton" data-id="${t.id}"></i></a>`;
+            // TODO: appendTo
+            $lastRoom.after(html);
+        });
+    }
+    function removeSearchTimelineButton(id) {
+        $(`#roomws${id}`).remove();
+    }
+
+    function $appendAddNewUserTimelineButton() {
+        const $lastRoom = $("a > .roomname").last().parent();
+        const html = ` <a href="#" onclick="return false;"><span class="addnewusertl">＋TL</span></a>`;
         $lastRoom.after(html);
-        return $(".addnewtimeline");
+        return $(".addnewusertl");
+    }
+
+    function $insertAddNewSearchButton() {
+        const $submit = $(".mainarea > .sheet:first form input[type='submit']").first();
+        const html = `<a href="#" onclick="return false;"><span class="addnewsearchtl">＋TL</span></a>`;
+        $submit.after(html);
+        return $(".addnewsearchtl");
     }
 
     async function initButtons(db) {
-        const targets = await dbGetAll(db, DB_TABLE_NAME);
-        appendTimelineButton(targets);
-        const $addNewButton = $appendAddNewTimelineButton();
-        $addNewButton.on("click", inputThenAddNewTimelineButton);
-        $(document).on("click", ".removetlbutton", async function (e) {
+        const users = await dbGetAll(db, DB_TABLE_NAME_PLAYER);
+        appendUserTimelineButton(users);
+        const $addUserButton = $appendAddNewUserTimelineButton();
+        $addUserButton.on("click", async (e) => await inputThenAddNewUserTimelineButton(db));
+        $(document).on("click", ".usertl > .removetlbutton", async function (e) {
             e.preventDefault();
-            await confirmThenRemoveTimelineButton(db, $(this));
+            await confirmThenRemoveUserTimeline(db, $(this));
+        });
+
+        const wordSearches = await dbGetAll(db, DB_TABLE_NAME_WORD);
+        appendSearchTimelineButton(wordSearches);
+        const $addSearchButton = $insertAddNewSearchButton();
+        $addSearchButton.on("click", async (e) => await addNewSearchTimelineButton(db));
+        $(document).on("click", ".wstl > .removetlbutton", async function (e) {
+            e.preventDefault();
+            await confirmThenRemoveSearchTimeline(db, $(this));
         });
     }
 
@@ -216,10 +366,10 @@
         if (eno === 0) {
             return;
         }
-        const targetEnos = await dbGetAllKeys(db, DB_TABLE_NAME);
+        const targetEnos = await dbGetAllKeys(db, DB_TABLE_NAME_PLAYER);
         if (targetEnos.indexOf(eno) !== -1) {
             const info = await extractInfoFromProfile($(document));
-            await dbPut(db, DB_TABLE_NAME, { eno, name: info.name, icon: info.icon });
+            await dbPut(db, DB_TABLE_NAME_PLAYER, { eno, name: info.name, icon: info.icon });
         }
     }
 
@@ -234,20 +384,31 @@
         return;
     }
 
-    const db = await openSingleTableDB(DB_NAME, DB_TABLE_NAME, { keyPath: "eno" }, DB_VERSION);
+    const database = await openDB();
     if (currentPage == "chat") {
-        await initButtons(db);
+        await initButtons(database);
         $(document.head).append(`<style type="text/css">
 .roomlink {
     position: relative;
+    display: inline-block;
+    vertical-align: top;
 }
-.addnewtimeline {
+.addnewusertl {
     display: inline-block;
     cursor: pointer;
     padding: 2px 6px;
     box-shadow: 2px 0px 3px #00000066;
-    background-color: #cceeff;
+    background-color: #ffe1d0;
     color: #333333;
+}
+.addnewsearchtl {
+    display: inline-block;
+    cursor: pointer;
+    padding: 2px 6px;
+    box-shadow: 2px 0px 3px #00000066;
+    background-color: #d2f9fb;
+    color: #333333;
+    margin-left: 6px;
 }
 .removetlbutton:after {
     content: "✕";
@@ -261,6 +422,22 @@
     border: 1px solid #bbb099;
     background-color: rgba(255,255,255,0.8);
 }
+.usertl > .roomname {
+    background-color: #ffe1d0;
+    border-left: 12px solid #ffac7c;
+}
+.wstl > .roomname {
+    background-color: #d2f9fb;
+    border-left: 12px solid #8ae4e8;
+    min-width: auto;
+    padding: 0px 1.1em 0 8px;
+}
+.wsroom {
+
+}
+.wsquery {
+    min-height: 1.5em;
+}
 .roomname{
     margin-bottom: 4px;
 }
@@ -268,15 +445,21 @@
     padding: 0;
     padding-left: 0;
     padding-right: 1px;
-    vertical-align: top;
     min-width: auto;
 }
-.iconlabel img{
+.iconlabel img {
     width: calc(1.5em + 16px);
     height: calc(1.5em + 16px);
 }
+.searchicon:before {
+    content: "\\01F50E";
+    display: inline-block;
+    font-family: "Segoe UI Symbol";
+    position: absolute;
+    color: black;
+}
 </style>`);
     } else if (currentPage == "profile") {
-        updateTargetDataOfCurrentPage(db);
+        updateTargetDataOfCurrentPage(database);
     }
 })();
