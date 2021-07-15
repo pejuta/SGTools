@@ -14,8 +14,13 @@
 
 ### チャット関連
 - [SGAddUserTimelines](https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js)
-> 任意のキャラクターのタイムライン(発言一覧)を追加できるようにする。  
-> 導入により表示される［＋］ボタンをクリックし、ENo.を入力することで追加が可能。
+> 任意のキャラクター/検索タイムライン(発言一覧)を追加できるようにする。  
+> 応用により、ハッシュタグの検索や発言ツリーをタブとして残しておけるようにできたりする。  
+> 導入により表示される［＋］ボタンをクリックし、ENo.を入力することで追加が可能。  
+> 後述の[SGChatSearchTargetSelector](https://pejuta.github.io/SGTools/UserScripts/SGChatSearchTargetSelector.user.js)との併用推奨。
+
+- [SGChatSearchTargetSelector](https://pejuta.github.io/SGTools/UserScripts/SGChatSearchTargetSelector.user.js)
+> チャットページ右上にある発言検索で、検索対象となる発言範囲を選択可能にする。
 
 - [SGFavChat](https://pejuta.github.io/SGTools/UserScripts/SGFavChat.user.js)
 > チャットを【お気に入り】として保存することが出来るようにする。（Twitterのふぁぼに近しい機能を追加する。）
