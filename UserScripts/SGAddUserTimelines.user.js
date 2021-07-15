@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットに任意のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=(?:chat|cdel)(?:&.*)?|index.php)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.11
+// @version     1.0.11.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -53,6 +53,9 @@
             };
             request.onsuccess = (e) => {
                 res(e.target.result);
+            };
+            request.onblocked = (e) => {
+                rej("cannot to open db; blocked.");
             };
 
             request.onupgradeneeded = (e) => {
