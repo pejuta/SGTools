@@ -291,7 +291,7 @@
             let listText;
             switch(query.list) {
                 case "0": // all
-                    listText = "全て";
+                    listText = "全体";
                     break;
                 case "1": // tl
                     listText = "タイムライン";
