@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットに任意のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=(?:chat|cdel)(?:&.*)?|index.php)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.11
+// @version     1.0.11.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -49,9 +49,11 @@
         return new Promise((res, rej) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onerror = (e) => {
+                console.log("dbを開けませんでした。");
                 rej("failed to open db");
             };
             request.onsuccess = (e) => {
+                console.log("dbを開きました。");
                 res(e.target.result);
             };
 
@@ -59,13 +61,18 @@
                 const db = e.target.result;
                 const tx = e.target.transaction;
 
+                console.log("old", e.oldVersion, "new", e.newVersion);
+
                 if (!e.oldVersion) {
                     db.createObjectStore(DB_TABLE_NAME_PLAYER, { keyPath: "eno" });
+                    console.log(DB_TABLE_NAME_PLAYER + "テーブルを作りました。");
                 }
                 if (e.oldVersion < 2) {
                     // 5列unique indexは効率が極めて悪いので文字列化して投入することにした。
                     const wordTable = db.createObjectStore(DB_TABLE_NAME_WORD, { keyPath: "id", autoIncrement: true });
+                    console.log(DB_TABLE_NAME_WORD + "テーブルを作りました。");
                     wordTable.createIndex("query", "query", { unique: true });
+                    console.log(DB_TABLE_NAME_WORD + "テーブルにインデックスを作りました。");
                 }
             };
         });
@@ -76,9 +83,11 @@
             const table = db.transaction([tableName]).objectStore(tableName);
             const request = table.getAll();
             request.onerror = (e) => {
+                console.log(tableName + "からの読み出しに失敗しました。");
                 rej("failed to getAll from table");
             };
             request.onsuccess = (e) => {
+                console.log(tableName + "からの読み出しに成功しました。");
                 res(e.target.result);
             };
         });
@@ -341,14 +350,19 @@
     }
 
     async function initButtons(db) {
+        console.log("追加するユーザータイムラインの対象データをDBから読みます。");
         const users = await dbGetAll(db, DB_TABLE_NAME_PLAYER);
+        console.log("読み出しに完了しました。タイムライン複数を追加します。");
         appendUserTimelineButton(users);
+        console.log("追加完了しました。次にユーザー＋ボタンを追加します。");
         const $addUserButton = $appendAddNewUserTimelineButton();
         $addUserButton.on("click", async (e) => await inputThenAddNewUserTimelineButton(db));
         $(document).on("click", ".usertl > .removetlbutton", async function (e) {
             e.preventDefault();
             await confirmThenRemoveUserTimeline(db, $(this));
         });
+        console.log("ユーザー＋ボタンの追加完了しました。");
+        console.log("検索タイムライン処理を行います。");
 
         const wordSearches = await dbGetAll(db, DB_TABLE_NAME_WORD);
         appendSearchTimelineButton(wordSearches);
@@ -358,6 +372,8 @@
             e.preventDefault();
             await confirmThenRemoveSearchTimeline(db, $(this));
         });
+
+        console.log("検索タイムライン処理を完了しました。");
     }
 
     async function updateTargetDataOfCurrentPage(db) {
@@ -375,17 +391,23 @@
     let currentPage = "";
     if ($("#btnreplylist").length === 1) {
         // chat
+        console.log("開かれたのはチャットページです。");
         currentPage = "chat";
     } else if ($(".fav").length === 1) {
         // profile
+        console.log("開かれたのはプロフィールページです。");
         currentPage = "profile";
     } else {
         return;
     }
 
+    console.log("データベースを開きます。");
     const database = await openDB();
+    console.log("データベースを開きました。");
     if (currentPage === "chat") {
+        console.log("チャットページの処理を開始します。");
         await initButtons(database);
+        console.log("チャットページの処理を完了しました。");
         $(document.head).append(`<style type="text/css">
 .roomlink {
     position: relative;
