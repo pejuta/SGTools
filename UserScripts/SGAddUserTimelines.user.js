@@ -4,7 +4,7 @@
 // @description Stroll Greenのチャットに任意のタイムラインを追加する
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=(?:chat|cdel)(?:&.*)?|index.php)?$/
 // @include     /^http:\/\/st\.x0\.to\/?\?mode=profile&eno=\d+$/
-// @version     1.0.11.1
+// @version     1.0.12
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGAddUserTimelines.user.js
 // @grant       none
@@ -20,6 +20,23 @@
     const DB_TABLE_NAME_PLAYER = "targets";
     const DB_TABLE_NAME_WORD = "searches";
     const DB_VERSION = 2;
+
+    const escapeHtml = (() => {
+        const escapeMap = Object.freeze({
+           "&": "&amp;",
+            "'": "&#x27;",
+            "\"": "&quot;",
+            "`": "&#x60;",
+            "<": "&lt;",
+            ">": "&gt;",
+        });
+
+        const reEscape = new RegExp(`[${Object.keys(escapeMap).join("")}]`, "g");
+
+        return function escapeHtml(str) {
+            return str.replace(reEscape, (match) => escapeMap[match]);
+        };
+    })();
 
     class SearchQuery {
         constructor(mode, list, room, filtereno, keyword, rootid) {
@@ -216,9 +233,9 @@
         descendingTargets.forEach((target) => {
             let html;
             if (target.icon) {
-                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink usertl iconlabel"><span class="roomname"><img src="${target.icon}" title="${target.name}(${target.eno})"></span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
+                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink usertl iconlabel"><span class="roomname"><img src="${target.icon}" title="${escapeHtml(target.name)}(${target.eno})"></span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
             } else {
-                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink usertl"><span class="roomname">${target.name}(${target.eno})</span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
+                html = ` <a href="./?mode=chat&list=5&chara=${target.eno}" id="roome${target.eno}" class="roomlink usertl"><span class="roomname">${escapeHtml(target.name)}(${target.eno})</span><i class="removetlbutton" data-eno="${target.eno}"></i></a>`;
             }
             // TODO: appendTo
             $lastRoom.after(html);
@@ -319,7 +336,7 @@
                     break;
             }
 
-            const labelHtmls = `<div class="wsroom">at:${listText}</div> <div class="wsquery">${query.filtereno ? `from:${query.filtereno} ` : ""}${query.keyword}</div>`;
+            const labelHtmls = `<div class="wsroom">at:${escapeHtml(listText)}</div> <div class="wsquery">${query.filtereno ? `from:${query.filtereno} ` : ""}${escapeHtml(query.keyword)}</div>`;
             const html = ` <a href="./?${query.toString()}" id="roomws${t.id}" class="roomlink wstl"><i class="searchicon"></i><span class="roomname">${labelHtmls}</span><i class="removetlbutton" data-id="${t.id}"></i></a>`;
             // TODO: appendTo
             $lastRoom.after(html);
