@@ -3,13 +3,13 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの各種行動画面のキャラ選択を便利にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku(?:0|4)(&.*)?)?$/
-// @version     1.0.10
+// @version     1.0.11
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @grant       none
 // ==/UserScript==
 //
-// v1.0.10 -> エラー送信後にスクリプトが無効化される一部不具合を修正。
+// v1.0.11 -> サーバ負荷対策を導入。【庭園の世話】にチェックがついている時以外にはスキル情報を読み込まなくしました。
 
 await (async () => {
     const $targetSubtitle = $("h2.subtitle").filter((i, e) => e.innerHTML === "基本宣言" || e.innerHTML === "花壇の管理");
@@ -17,11 +17,18 @@ await (async () => {
         return;
     }
 
+    function delay(ms) {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(), ms);
+        });
+    }
+
     const skillsClassname = "charaskills";
     const singleSkillClassname = "charasingleskill";
     const docClassname_HiddenEffects = "hiddeneffects";
     const singleSkillClassname_NoCondition = "nocondition";
     const localStorageName_HiddenEffects = "SGActionCharaSelector_ShowNoSkillEffects";
+    const CHARA_DL_DELAY_MS = 1000;
 
     const _vdoc = document.implementation.createHTMLDocument();
     const $inputEnos = $("#d1,#d2,#d3");
@@ -51,8 +58,14 @@ await (async () => {
         return null;
     }
 
+    function skillDataExists($target) {
+        const $insertedSkills = $target.children("." + skillsClassname);
+        return $insertedSkills.length > 0;
+    }
+
     // toggleSelectedCharaとともに呼ぶ順序によって結果が変わるため要注意
-    async function toggleSkillsOfSelectedChara($target) {
+    // mode?: "show", "hide"
+    async function toggleSkillsOfSelectedChara($target, mode) {
         if (!$target.is(".charaframe,.charaframe2")) {
             // .charaframe2 は .charaframeself のブロックにも付与されている
             return "notcharaframe";
@@ -62,7 +75,13 @@ await (async () => {
 
         const $insertedSkills = $target.children("." + skillsClassname);
         if ($insertedSkills.length > 0) {
-            $insertedSkills.toggle();
+            if (mode === "show") {
+                $insertedSkills.show();
+            } else if (mode === "hide") {
+                $insertedSkills.hide();
+            } else {
+                $insertedSkills.toggle();
+            }
             return null;
         }
         else if ($target.is(".charaframe")) {
@@ -106,6 +125,32 @@ await (async () => {
         $skills.find("span.marks.marki0+span+span+small>b:empty").each((i, e) => {
             $(e).parent().next("br").next("small").children("span:nth-child(3)").css("color", "#704030;");
         }).closest("." + singleSkillClassname).addClass(singleSkillClassname_NoCondition);
+    }
+
+    // [target1, target2, ...]
+    async function toggleSkillsOfSelectedCharasDelayed(targetArray, mode) {
+        let i = 0;
+        const iEnd = targetArray.length;
+        for (let target of targetArray) {
+            const $target = $(target);
+            let needsToDownload = !(skillDataExists($target) || mode === "hide");
+
+            // ロード失敗でもディレイ挟んで継続
+            await toggleSkillsOfSelectedChara($target, mode);
+
+            if (!needsToDownload) {
+                continue;
+            }
+
+            if (++i === iEnd) {
+                return;
+            }
+            await delay(CHARA_DL_DELAY_MS);
+        }
+    }
+
+    function exploringRadioIsSelected() {
+        return $("input[name='koudou']:checked").val() === "3";
     }
 
     function enableToggleOfSkillEffects() {
@@ -166,6 +211,10 @@ await (async () => {
         processingEvent = true;
         try {
             if (toggleSelectedChara($(this))) return;
+
+            if (!exploringRadioIsSelected()) {
+                return;
+            }
             if (await toggleSkillsOfSelectedChara($(this))) return;
         }
         finally {
@@ -176,11 +225,45 @@ await (async () => {
         if (processingEvent) return;
         processingEvent = true;
         try {
+            if (!exploringRadioIsSelected()) {
+                return;
+            }
             if (await toggleSkillsOfSelectedChara($(this))) return;
         }
         finally {
             processingEvent = false;
         }
     });
+    $("input[name='koudou']").on("click", async function() {
+        if (processingEvent) return;
+        processingEvent = true;
+        try {
+            const selectedEnos = $inputEnos.map((i, e) => e.value).get().filter((e) => !!e);
+            const charaFramesToToggle = selectedEnos.map(e => document.querySelector("#eno" + e))
+                                                    .filter(x => !!x)
+                                                    .filter(x => x.classList.contains("charaframe") || x.classList.contains("charaframe2"));
+
+            let mode = "hide";
+            if (this.value === "3") {
+                // 探索
+                mode = "show";
+            }
+
+            const $playerFrame = $(".charaframeself:first");
+
+            if (!(mode === "show" && !skillDataExists($playerFrame))) {
+                charaFramesToToggle.push($playerFrame.get())
+            }
+
+            if (charaFramesToToggle.length === 0) {
+                return;
+            }
+
+            if (await toggleSkillsOfSelectedCharasDelayed(charaFramesToToggle, mode)) return;
+        }
+        finally {
+            processingEvent = false;
+        }
+    }),
     enableToggleOfSkillEffects();
 })();
