@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの各種行動画面のキャラ選択を便利にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku(?:0|4)(&.*)?)?$/
-// @version     1.0.12
+// @version     1.0.12.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @grant       none
@@ -82,6 +82,9 @@ await (async () => {
             } else {
                 $insertedSkills.toggle();
             }
+            return null;
+        }
+        else if (mode === "hide") {
             return null;
         }
         else if ($target.is(".charaframe")) {
