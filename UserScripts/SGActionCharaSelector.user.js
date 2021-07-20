@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの各種行動画面のキャラ選択を便利にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku(?:0|4)(&.*)?)?$/
-// @version     1.0.11
+// @version     1.0.12
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js
 // @grant       none
@@ -153,6 +153,10 @@ await (async () => {
         return $("input[name='koudou']:checked").val() === "3";
     }
 
+    function exploringRadioExists() {
+        return $("input[name='koudou']:checked").length > 0;
+    }
+
     function enableToggleOfSkillEffects() {
         const $button = $("<span class='sgbutton' style='margin-top:4px;'/>").appendTo($(".charaframe2.charaframeself").prev("p"));
         const toOnText = "スキル効果を表示する";
@@ -212,7 +216,7 @@ await (async () => {
         try {
             if (toggleSelectedChara($(this))) return;
 
-            if (!exploringRadioIsSelected()) {
+            if (exploringRadioExists() && !exploringRadioIsSelected()) {
                 return;
             }
             if (await toggleSkillsOfSelectedChara($(this))) return;
@@ -225,7 +229,7 @@ await (async () => {
         if (processingEvent) return;
         processingEvent = true;
         try {
-            if (!exploringRadioIsSelected()) {
+            if (exploringRadioExists() && !exploringRadioIsSelected()) {
                 return;
             }
             if (await toggleSkillsOfSelectedChara($(this))) return;
