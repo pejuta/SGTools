@@ -36,9 +36,9 @@
 - [SGIconSwapper](https://pejuta.github.io/SGTools/UserScripts/SGIconSwapper.user.js)
 > キャラ設定でアイコンの並び順を変更できるようにする。
 
-- [SGSkillSettingModifier](https://pejuta.github.io/SGTools/UserScripts/SGSkillConnectSettingHelper.user.js)
-> 戦闘設定のドラッグによる並び替えを可能にする。
-> ダブルクリックによるセリフ開閉を可能にする。
+
+- [SGSkillSettingModifier](https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js)
+> 戦闘設定のドラッグによる並び替えを可能にする。  
+> ダブルクリックによるセリフ開閉を可能にする。  
 > 戦闘設定でコネクト・エミットスキルの設定を楽にする。  
 > コネクト・エミットスキルで選択しているスキルの名称を表示する。
-
