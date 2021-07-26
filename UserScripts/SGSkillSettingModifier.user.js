@@ -2,8 +2,8 @@
 // @name        SGSkillSettingModifier
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
-// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku(?:0|1)(&.*)?)?$/
-// @version     1.0.3
+// @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
+// @version     1.0.3.1
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
