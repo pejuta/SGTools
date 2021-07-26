@@ -42,3 +42,5 @@
 > ダブルクリックによるセリフ開閉を可能にする。  
 > 戦闘設定でコネクト・エミットスキルの設定を楽にする。  
 > コネクト・エミットスキルで選択しているスキルの名称を表示する。
+> 旧版：[SGSkillConnectSettingHelper](https://pejuta.github.io/SGTools/UserScripts/SGSkillConnectSettingHelper.user.js)  
+> ※新版と旧版を同時に使用しないでください。  
