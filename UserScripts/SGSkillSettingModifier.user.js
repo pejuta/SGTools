@@ -152,7 +152,7 @@
             Sortable.create(this.$container[0], {
                 animation: 100,
                 draggable: "." + SKILL_ITEM_CLASSNAME,
-                /* handle: ".marks.marki0", */
+                handle: ".marks.marki0",
                 onChange: () => this.resetIndexOfSkills(),
             });
         }
