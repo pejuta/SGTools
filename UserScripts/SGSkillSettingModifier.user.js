@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.3.3
+// @version     1.0.4
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -16,6 +16,10 @@
 
     class SkillSelectChaser {
         static init() {
+            $("select.selskill").each((i, e) => {
+                e.dataset.index = (i + 1).toString();
+            });
+
             $("<style type='text/css'/>").html(`
     .skillnamelabel {
         padding-left: 8px;
@@ -61,24 +65,27 @@
                 if (!strIndex) {
                     this.updateSkillLabel($label);
                 } else {
-                    const id = $("select.selskill").eq(parseInt(strIndex, 10) - 1).val();
-                    this.updateSkillLabel($label, id);
+                    const $skillSelect = $("select.selskill").eq(parseInt(strIndex, 10) - 1);
+                    this.updateSkillLabel($label, $skillSelect);
                 }
             });
 
             $("select.selskill").on("change", (e) => {
-                const id = $(e.currentTarget).val();
-                this.updateSkillLabel($label, id);
+                if (e.currentTarget.dataset.index !== this.$select[0].value) {
+                    return;
+                }
+                this.updateSkillLabel($label, $(e.currentTarget));
             });
 
             this.$select.trigger("change");
         }
 
-        updateSkillLabel($label, /* optional */ skillId) {
-            if (!skillId) {
+        updateSkillLabel($label, /* optional */ $skillSelect) {
+            if (!$skillSelect) {
                 $label.html("");
                 return;
             }
+            const skillId = $skillSelect.val();
             const $type = $(`#type${skillId}`);
             if ($type.length !== 1) {
                 $label.html("");
