@@ -2,6 +2,7 @@
 
 ## UserScripts
 複数ブラウザで使用できる拡張機能のようなものです。導入にはTampermonkey、Violentmonkey等のUserScriptを動作できる環境(拡張機能)の事前導入が必要です。
+ご利用は**自己責任**でお願いします。
 
 ### 全般
 - [SGEmphasizeNewFavs](https://pejuta.github.io/SGTools/UserScripts/SGEmphasizeNewFavs.user.js)
@@ -35,7 +36,11 @@
 - [SGIconSwapper](https://pejuta.github.io/SGTools/UserScripts/SGIconSwapper.user.js)
 > キャラ設定でアイコンの並び順を変更できるようにする。
 
-- [SGSkillConnectSettingHelper](https://pejuta.github.io/SGTools/UserScripts/SGSkillConnectSettingHelper.user.js)
-> 戦闘設定でコネクト・エミットスキルの設定を楽にする。  
-> スキル並べ順を変更した時の追尾や、選択しているスキルの名称を表示する。
 
+- [SGSkillSettingModifier](https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js)
+> 戦闘設定のドラッグによる並び替えを可能にする。  
+> ダブルクリックによるセリフ開閉を可能にする。  
+> 戦闘設定でコネクト・エミットスキルの設定を楽にする。  
+> コネクト・エミットスキルで選択しているスキルの名称を表示する。
+> 旧版：[SGSkillConnectSettingHelper](https://pejuta.github.io/SGTools/UserScripts/SGSkillConnectSettingHelper.user.js)  
+> ※新版と旧版を同時に使用しないでください。  
