@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのスキル名を検索可能にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.4
+// @version     1.0.4.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @grant       none
@@ -108,6 +108,10 @@
     padding-left: 0px;
 }
 
+.searchableselect_sel > .searchableselect_pls.error {
+    background-color: #ffbbbb;
+}
+
 .searchableselect_sel > .searchableselect_val::placeholder {
     color: black;
 }
@@ -131,6 +135,10 @@
     height: 20px;
     padding-left: 0px;
     text-align: inherit;
+}
+
+.searchableselect_sel > ul > li.marked {
+    background-color: #ffeebb;
 }
 
 .searchableselect_sel > ul > li:hover {
@@ -163,14 +171,6 @@
 
 .searchableselect_sel .marks.marki0.autoskill {
     background-color: #dd5757;
-}
-
-.marked {
-    background-color: #ffeebb!important;
-}
-
-.error {
-    background-color: #ffbbbb!important;
 }
 </style>`);
 
