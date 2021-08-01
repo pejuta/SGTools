@@ -62,12 +62,6 @@
 }
 
 .searchableselect_btn {
-    display: block;
-    position: absolute;
-    right: 0;
-    background-color: white;
-    width: 24px;
-    height: 100%;
 }
 .searchableselect_btn:before {
     content: "";
