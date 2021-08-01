@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのスキル名を検索可能にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.3
+// @version     1.0.3.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @grant       none
@@ -291,7 +291,7 @@
                 const skillName = $tds.eq(2).text();
                 const skillUsableCount = $tds.eq(4).text();
                 const queryTarget = `(${skillNum})${typeName ? `【${typeName}】` : ""}${skillName}${isAuto ? "【自動】【A】" : ""}${isStep ? "【S】" : ""}[${skillUsableCount}]`;
-                const placeholder = `(${skillNum})${typeName ? `【✿${typeName}】` : ""}${skillName}`;
+                const placeholder = `(${skillNum})${typeName ? `【${typeName}】` : ""}${skillName}`;
 
                 const skillid = $tds.eq(1).attr("id").substr(4);
 
@@ -393,7 +393,6 @@
             $targetSkillDesc.html(scount + stype + sdesc).attr("title", $desc.text());
         });
     };
-    $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>")
 
     if ($("#skill1").length !== 1) {
         return;
@@ -404,5 +403,7 @@
     const $kouhai = $("select[name='kouhai_base']").add("select[name='kouhai_mix']");
     new SearchableSelect(true).enable($kouhai);
     $kouhai.next().css("margin-top", "-4px");
+
+    $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>")
     reloadSkill();
 })();
