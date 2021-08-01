@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのスキル名を検索可能にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.0
+// @version     1.0.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @grant       none
@@ -11,7 +11,6 @@
 
 (() => {
     "use strict";
-
 
     class Delayer {
         setDelay(func, delayMS, /* ...args: any[] */) {
@@ -163,6 +162,10 @@
 .searchableselect_sel .marks.marki0 {
     width: 2.67em;
 }
+
+.searchableselect_sel .marks.marki0.stepskill {
+    background-color: #ccaa33;
+}
 </style>`);
 
             $("div.divp").parent().css("overflow", "clip visible");
@@ -246,27 +249,42 @@
         $buildSkillList() {
             const lisHtml = $("table#skill tr").slice(0).map((i, e) => {
                 if (i === 0) {
-                    return `<li data-skillid="0"><span class="marks marki0">0</span><span>　</span>--設定なし--</li>`;
+                    return `<li data-skillid="0" data-placeholder="(0) --設定なし--"><span class="marks marki0">0</span><span>　</span>--設定なし--</li>`;
                 }
 
                 const $tds = $(e).children("td");
-                const index = $tds.eq(0).html();
                 let type = $tds.eq(1).html();
+                let typeName = "";
+                let skillProp = "[通常]";
                 if (type === "　　　　　") {
                     if (this.excludesBaseSkills) {
                         return "";
                     }
                     type = "<span>　</span>";
                 } else {
-                    const typeName = $tds.eq(1).text().substr(2, 2);
+                    typeName = $tds.eq(1).text().substr(2, 2);
                     type = `<span class="${$tds.eq(1).children()[0].className}" title="${typeName}">✿</span>`;
+                    skillProp = $tds.eq(2).children("span:first").html();
                 }
-                const skillName = $tds.eq(2).html();
-                const innerHTML = index + type + skillName;
+
+                const isStep = $tds.eq(3).children(".skillact").children("span:first").html() === "【S】";
+
+                const $index = $tds.eq(0).clone();
+                if (isStep) {
+                    $index.children(".marks.marki0").addClass("stepskill");
+                }
+                const skillNameHTML = $tds.eq(2).html();
+                const innerHTML = $index.html() + type + skillNameHTML;
+
+                const skillNum = $tds.eq(0).children(".marks.marki0").html() || "";
+                const skillName = $tds.eq(2).text();
+                const skillUsableCount = $tds.eq(4).text();
+                const queryTarget = `(${skillNum})${typeName ? `【${typeName}】` : ""}${skillName}${isStep ? "【S】" : ""}[${skillUsableCount}]`;
+                const placeholder = `(${skillNum})${typeName ? `【✿${typeName}】` : ""}${skillName}`;
 
                 const skillid = $tds.eq(1).attr("id").substr(4);
 
-                return `<li data-skillid="${skillid}">${innerHTML}</li>`;
+                return `<li data-skillid="${skillid}" data-querytarget="${queryTarget}" data-placeholder="${placeholder}" data-snum="${skillNum}" data-stype="${typeName}" data-sprop="${skillProp}" data-sname="${skillName}" data-isstep="${isStep}" data-scount="${skillUsableCount}">${innerHTML}</li>`;
             }).get()
             .join("");
 
@@ -284,8 +302,11 @@
                 return;
             }
 
+            const queryArray = val.split(/[\s+,]/g).filter((q) => q); // remove first or last empty if any
+
             this.$ul.children().each((i, e) => {
-                if (e.innerHTML.indexOf(val) !== -1) {
+                const queryTarget = e.dataset.querytarget || "";
+                if (queryArray.every((q) => queryTarget.indexOf(q) !== -1)) {
                     e.style.display = "";
                 } else {
                     e.style.display = "none";
@@ -322,7 +343,7 @@
             const top = index < MAX_SHOWN_ON_SELECT ? 0 : (index - MAX_SHOWN_ON_SELECT + 2) * (HEIGHT_OF_OPTION_ON_SELECT_PX + 1);
             this.$ul.scrollTop(top);
 
-            $sel.find(".searchableselect_val").attr("placeholder", $activeLi.text());
+            $sel.find(".searchableselect_val").attr("placeholder", $activeLi.data("placeholder"));
         }
 
         deactivateSelect($sel) {
@@ -336,13 +357,32 @@
 
     window.reloadSkill = function reloadSkill(){
         $(".selskill").each((i, e) => {
+            const $targetSkillDesc = $(e).next(/*searchable*/).next(/*desc*/);
+
             const skillId = $(e).val();
-            const stype = $("#type"+skillId).html();
             const $desc = $("#desc"+skillId);
+            if (!$desc.length) {
+                $targetSkillDesc.html("").attr("title", "");
+                return;
+            }
+
             const sdesc = $desc.html();
-            $(e).next().next().html(stype + sdesc).attr("title", $desc.text());
+            const stype = $("#type"+skillId).html();
+            const $countLeft = $desc.next("td");
+            let scount = "";
+            if ($countLeft.children().length === 1) {
+                const $countLeftClone = $countLeft.clone();
+                $countLeftClone.children().html("[" + $countLeftClone.children().html() + "]");
+                scount = $countLeftClone.html();
+            } else {
+                scount = "[" + $countLeft.html() + "]";
+            }
+            scount = `<span class="skillcount">${scount}</span>`
+
+            $targetSkillDesc.html(scount + stype + sdesc).attr("title", $desc.text());
         });
     };
+    $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>")
 
     if ($("#skill1").length !== 1) {
         return;
