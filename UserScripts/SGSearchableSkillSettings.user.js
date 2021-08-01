@@ -514,7 +514,7 @@
             let flowersHTML = "ストロールスキル：<span>";
             for (let typ of typeList) {
                 const stype = SkillTypeCounter.classToType[typ.cls];
-                flowersHTML += `<span class="${typ.cls}">【✿${stype}: <b>${typeCountsObj[typ.cls]}</b>】</span>`;
+                flowersHTML += `<span class="${typ.cls}">【✿${stype}×<b>${typeCountsObj[typ.cls]}</b>】</span>`;
                 if (typ.count >= 4) {
                     triggeredTypes.push(typ.cls);
                 }
