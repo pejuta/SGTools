@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのスキル名を検索可能にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.4.1
+// @version     1.0.4.2
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @grant       none
@@ -182,28 +182,68 @@
             this.$ul = this.$buildSkillList();
 
             this.$ul.on("click", "li", (e) => {
-                const $searchable = $(e.currentTarget).closest(".searchableselect");
-                const $baseSelect = $searchable.next();
-                const $sel = $searchable.find(".searchableselect_sel");
-                $baseSelect.val($(e.currentTarget).data("skillid")).trigger("change");
-                $searchable.find(".searchableselect_val").attr("title", e.currentTarget.title);
-                const $pls = $searchable.find(".searchableselect_pls").html(e.currentTarget.innerHTML);
-
-                const index = this.$ul.children("li").index(e.currentTarget);
-                $sel[0].dataset.index = index;
-                this.markSetSkillOnList();
-                this.markSetSameSkillErrorForPlaceholder();
-
+                this.applySelected(e.currentTarget);
+                const $sel = $(e.currentTarget).closest(".searchableselect_sel");
                 this.deactivateSelect($sel);
             });
-
             this.evtDelayer = new Delayer();
+        }
+
+        applySelected(li) {
+            const $searchable = $(li).closest(".searchableselect");
+            const index = this.$searchables.index($searchable);
+            const $baseSelect = $searchable.next();
+            $baseSelect.val($(li).data("skillid")).trigger("change");
+            this.rescan(index, true);
+        }
+
+        rescan(index /* 0 based */, /* optional */ updateMarks) {
+            updateMarks = typeof(updateMarks) === "undefined" ? true : updateMarks;
+
+            if (!this.$baseSelects.length) {
+                return;
+            }
+
+            const target = this.$baseSelects.get(index);
+            const skillIdx = this.idToIndexhash.hasOwnProperty(target.value) ? this.idToIndexhash[target.value] : -1;
+            const $li = this.$ul.children().eq(skillIdx);
+
+            this.$sels.get(index).dataset.index = skillIdx;
+            this.$vals.eq(index).attr("title", $li.attr("title") || "");
+
+            const $pls = this.$pls.eq(index);
+            $pls.html($li.html());
+            if ($li.hasClass("error")) {
+                $pls.addClass("error");
+            } else {
+                $pls.removeClass("error");
+            }
+
+            if (updateMarks) {
+                this.markAllSetSkillsOnList();
+                this.markAllSetSameSkillError();
+            }
+        }
+
+        rescanAll() {
+            if (!this.$baseSelects.length) {
+                return;
+            }
+
+            for (let index = 0; index < this.$baseSelects.length; index++) {
+                this.rescan(index, false);
+            }
+
+            this.markAllSetSkillsOnList();
+            this.markAllSetSameSkillError();
         }
 
         enable($baseSelects) {
             if (!$baseSelects.length) {
                 return;
             }
+
+            this.$baseSelects = $baseSelects;
 
             this.$searchables = $baseSelects.before("<div class='searchableselect'><div class='searchableselect_btn'></div><div class='searchableselect_sel'><div class='searchableselect_pls'></div><input type='text' class='searchableselect_val'></div></div>").prev();
             this.$sels = this.$searchables.children(".searchableselect_sel");
@@ -212,27 +252,16 @@
             this.$pls = this.$sels.children(".searchableselect_pls");
 
             this.$sels.eq(0).append(this.$ul);
-
-            this.$ul[0].style.display = "inline-block"; // for width
-
             this.idToIndexhash = {};
             this.$ul.children().each((i, e) => {
                 this.idToIndexhash[e.dataset.skillid] = i;
             });
-
-            const skillIdxs = $baseSelects.map((i, e) => this.idToIndexhash.hasOwnProperty(e.value) ? this.idToIndexhash[e.value] : -1).get();
-
-            this.$sels.each((i, e) => {
-                e.dataset.index = skillIdxs[i];
-            }).css({
+            this.$ul[0].style.display = "inline-block"; // for width
+            this.$sels.css({
                 height: $baseSelects.outerHeight(),
                 width: this.$ul.width(),
             });
             this.$ul[0].style.display = "";
-
-            this.$pls.each((i, e) => {
-                e.innerHTML = this.$ul.children().eq(skillIdxs[i]).html();
-            });
 
             this.$btns.on("click", (e) => {
                 this.toggleSelect($(e.currentTarget).next());
@@ -246,8 +275,6 @@
                 }
             }).on("keyup", (evt) => {
                 this.evtDelayer.setDelay((elem) => this.execFiltering(elem), 150, evt.currentTarget);
-            }).each((i, e) => {
-                e.title = this.$ul.children().eq(skillIdxs[i]).attr("title") || "";
             });
 
             $(document).on("click", (e) => {
@@ -258,8 +285,17 @@
 
             $baseSelects.hide();
 
-            this.markSetSkillOnList();
-            this.markSetSameSkillErrorForPlaceholder();
+            $(".swap").on("click", (e) => {
+                const sindex = $(e.currentTarget).data("index");
+
+                for (let i = 0; i < 2; i++) {
+                    const $searchable = $(`#skill${sindex + i}.selskill`).prev(".searchableselect");
+                    const index = this.$searchables.index($searchable);
+                    this.rescan(index, false);
+                }
+            });
+
+            this.rescanAll();
         }
 
         $buildSkillList() {
@@ -311,7 +347,7 @@
             return $(`<ul>${lisHtml}</ul>`);
         }
 
-        markSetSkillOnList() {
+        markAllSetSkillsOnList() {
             const $lis = this.$ul.children().removeClass("marked");
             this.$sels.each((i, e) => {
                 if (e.dataset.index === "0") {
@@ -321,7 +357,8 @@
             });
         }
 
-        markSetSameSkillErrorForPlaceholder() {
+        markAllSetSameSkillError() {
+            const $lis = this.$ul.children().removeClass("error");
             const hash = {};
             this.$sels.each((i, e) => {
                 if (e.dataset.index === "0") {
@@ -332,6 +369,7 @@
                 if (e.dataset.index in hash) {
                     this.$pls.eq(i).addClass("error");
                     this.$pls.eq(hash[e.dataset.index]).addClass("error");
+                    $lis.eq(parseInt(e.dataset.index, 10)).addClass("error");
                 } else {
                     this.$pls.eq(i).removeClass("error");
                 }
