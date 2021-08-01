@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのスキル名を検索可能にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.3.1
+// @version     1.0.4
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @grant       none
@@ -164,6 +164,14 @@
 .searchableselect_sel .marks.marki0.autoskill {
     background-color: #dd5757;
 }
+
+.marked {
+    background-color: #ffeebb!important;
+}
+
+.error {
+    background-color: #ffbbbb!important;
+}
 </style>`);
 
             $("div.divp").parent().css("overflow", "clip visible");
@@ -175,13 +183,17 @@
 
             this.$ul.on("click", "li", (e) => {
                 const $searchable = $(e.currentTarget).closest(".searchableselect");
-                const $baseSelect = $searchable.prev();
+                const $baseSelect = $searchable.next();
                 const $sel = $searchable.find(".searchableselect_sel");
                 $baseSelect.val($(e.currentTarget).data("skillid")).trigger("change");
                 $searchable.find(".searchableselect_val").attr("title", e.currentTarget.title);
-                $searchable.find(".searchableselect_pls").html(e.currentTarget.innerHTML);
+                const $pls = $searchable.find(".searchableselect_pls").html(e.currentTarget.innerHTML);
+
                 const index = this.$ul.children("li").index(e.currentTarget);
                 $sel[0].dataset.index = index;
+                this.markSetSkillOnList();
+                this.markSetSameSkillErrorForPlaceholder();
+
                 this.deactivateSelect($sel);
             });
 
@@ -193,7 +205,7 @@
                 return;
             }
 
-            this.$searchables = $baseSelects.after("<div class='searchableselect'><div class='searchableselect_btn'></div><div class='searchableselect_sel'><div class='searchableselect_pls'></div><input type='text' class='searchableselect_val'></div></div>").next();
+            this.$searchables = $baseSelects.before("<div class='searchableselect'><div class='searchableselect_btn'></div><div class='searchableselect_sel'><div class='searchableselect_pls'></div><input type='text' class='searchableselect_val'></div></div>").prev();
             this.$sels = this.$searchables.children(".searchableselect_sel");
             this.$vals = this.$sels.children(".searchableselect_val");
             this.$btns = this.$searchables.children(".searchableselect_btn");
@@ -245,6 +257,9 @@
             });
 
             $baseSelects.hide();
+
+            this.markSetSkillOnList();
+            this.markSetSameSkillErrorForPlaceholder();
         }
 
         $buildSkillList() {
@@ -291,9 +306,37 @@
 
                 return `<li title="${$tds.eq(3).text()}" data-skillid="${skillid}" data-querytarget="${queryTarget}" data-placeholder="${placeholder}" data-snum="${skillNum}" data-stype="${typeName}" data-sprop="${skillProp}" data-sname="${skillName}" data-isstep="${isStep}" data-isauto="${isAuto}" data-scount="${skillUsableCount}">${innerHTML}</li>`;
             }).get()
-            .join("");
+              .join("");
 
             return $(`<ul>${lisHtml}</ul>`);
+        }
+
+        markSetSkillOnList() {
+            const $lis = this.$ul.children().removeClass("marked");
+            this.$sels.each((i, e) => {
+                if (e.dataset.index === "0") {
+                    return;
+                }
+                $lis.eq(parseInt(e.dataset.index, 10)).addClass("marked");
+            });
+        }
+
+        markSetSameSkillErrorForPlaceholder() {
+            const hash = {};
+            this.$sels.each((i, e) => {
+                if (e.dataset.index === "0") {
+                    this.$pls.eq(i).removeClass("error");
+                    return;
+                }
+
+                if (e.dataset.index in hash) {
+                    this.$pls.eq(i).addClass("error");
+                    this.$pls.eq(hash[e.dataset.index]).addClass("error");
+                } else {
+                    this.$pls.eq(i).removeClass("error");
+                }
+                hash[e.dataset.index] = i;
+            });
         }
 
         execFiltering(input) {
@@ -360,33 +403,136 @@
         }
     }
 
-    window.reloadSkill = function reloadSkill(){
-        $(".selskill").each((i, e) => {
-            const $targetSkillDesc = $(e).next(/*searchable*/).next(/*desc*/);
+    class Utils {
+        static enableskillCountInfo() {
+            $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>");
+            window.reloadSkill = function reloadSkill(){
+                $(".selskill").each((i, e) => {
+                    const $targetSkillDesc = $(e).next(/*desc*/);
 
-            const skillId = $(e).val();
-            const $desc = $("#desc"+skillId);
-            if (!$desc.length) {
-                $targetSkillDesc.html("").attr("title", "");
-                return;
-            }
+                    const skillId = $(e).val();
+                    const $desc = $("#desc" + skillId);
+                    if (!$desc.length) {
+                        $targetSkillDesc.html("").attr("title", "");
+                        return;
+                    }
 
-            const sdesc = $desc.html();
-            const stype = $("#type"+skillId).html();
-            const $countLeft = $desc.next("td");
-            let scount = "";
-            if ($countLeft.children().length === 1) {
-                const $countLeftClone = $countLeft.clone();
-                $countLeftClone.children().html("[" + $countLeftClone.children().html() + "]");
-                scount = $countLeftClone.html();
-            } else {
-                scount = "[" + $countLeft.html() + "]";
-            }
-            scount = `<span class="skillcount">${scount}</span>`
+                    const sdesc = $desc.html();
+                    const stype = $("#type" + skillId).html();
+                    const $countLeft = $desc.next("td");
+                    let scount = "";
+                    if ($countLeft.children().length === 1) {
+                        const $countLeftClone = $countLeft.clone();
+                        $countLeftClone.children().html("[" + $countLeftClone.children().html() + "]");
+                        scount = $countLeftClone.html();
+                    } else {
+                        scount = "[" + $countLeft.html() + "]";
+                    }
+                    scount = `<span class="skillcount">${scount}</span>`;
 
-            $targetSkillDesc.html(scount + stype + sdesc).attr("title", $desc.text());
+                    $targetSkillDesc.html(scount + stype + sdesc).attr("title", $desc.text());
+                });
+            };
+
+            window.reloadSkill();
+        }
+    }
+
+    class SkillTypeCounter {
+        static classToType = Object.freeze({
+            type1: "平穏",
+            type2: "頑丈",
+            type3: "闘志",
+            type4: "華麗",
+            type5: "慈愛",
+            type6: "逆境",
+            type7: "支援",
+            type8: "妨害",
+            type9: "守護",
+            type10: "刹那",
+            type11: "拡散",
+            type12: "余裕",
+            type13: "根性",
+            type14: "増幅",
+            type15: "精密",
+            type16: "庭師",
         });
-    };
+
+        static init() {
+            $(document.head).append(
+`<style type="text/css">
+.skilltypeinfo {
+
+}
+</style>`);
+        }
+
+        constructor() {
+        }
+
+        enable($insertBefore) {
+            this.$info = $("<div class='skilltypeinfo'/>").insertBefore($insertBefore);
+            this.$triggeredTypes = $("<p class='skilltypemain'/>").appendTo(this.$info);
+            this.$flowers = $("<p class='skilltypesub'/>").appendTo(this.$info);
+
+            $(".selskill").on("change", (e) => this.update());
+            $("#s_type").on("change", (e) => this.update());
+            this.update();
+        }
+
+        buildTypeCountsObj() {
+            const typeCountsObj = {};
+            $(".selskill").each((i, e) => {
+                const skillId = $(e).val();
+                const $stype = $("#type" + skillId);
+                if (!$stype.children().length) {
+                    return;
+                }
+                const className = $stype.children().attr("class");
+                typeCountsObj[className] = typeCountsObj.hasOwnProperty(className) ? typeCountsObj[className] + 1 : 1;
+            });
+
+            return typeCountsObj;
+        }
+
+        update() {
+            const typeCountsObj = this.buildTypeCountsObj();
+
+            const typeList = [];
+            for (let cls in typeCountsObj) {
+                typeList.push({ cls, count: typeCountsObj[cls] });
+            }
+            typeList.sort((a, b) => b.count - a.count); // descending
+
+
+            const triggeredTypes = [];
+            const mainTypeCls = this.getSelectedMainTypeClass();
+            if (mainTypeCls) {
+                triggeredTypes.push(mainTypeCls);
+            }
+
+            let flowersHTML = "ストロールスキル：<span>";
+            for (let typ of typeList) {
+                const stype = SkillTypeCounter.classToType[typ.cls];
+                flowersHTML += `<span class="${typ.cls}">【✿${stype}: <b>${typeCountsObj[typ.cls]}</b>】</span>`;
+                if (typ.count >= 4) {
+                    triggeredTypes.push(typ.cls);
+                }
+            }
+            flowersHTML += "</span>";
+            const typesHTML = "発動予定タイプ：" + triggeredTypes.map(cls => `<b class="${cls}">【✿${SkillTypeCounter.classToType[cls]}】</b>`).join("");
+            this.$flowers.html(flowersHTML);
+            this.$triggeredTypes.html(typesHTML);
+        }
+
+        getSelectedMainTypeClass() {
+            const val = $("#s_type").val();
+            if (!val) {
+                return null;
+            }
+            return "type" + val;
+        }
+    }
 
     if ($("#skill1").length !== 1) {
         return;
@@ -396,8 +542,10 @@
     new SearchableSelect().enable($(".selskill"));
     const $kouhai = $("select[name='kouhai_base']").add("select[name='kouhai_mix']");
     new SearchableSelect(true).enable($kouhai);
-    $kouhai.next().css("margin-top", "-4px");
+    $kouhai.prev().css("margin-top", "-4px");
 
-    $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>")
-    reloadSkill();
+    SkillTypeCounter.init();
+    new SkillTypeCounter().enable($("div.divp").parent("div"));
+
+    Utils.enableskillCountInfo();
 })();
