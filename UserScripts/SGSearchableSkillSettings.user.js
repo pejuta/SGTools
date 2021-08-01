@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのスキル名を検索可能にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.1
+// @version     1.0.2
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @grant       none
@@ -166,6 +166,10 @@
 .searchableselect_sel .marks.marki0.stepskill {
     background-color: #ccaa33;
 }
+
+.searchableselect_sel .marks.marki0.autoskill {
+    background-color: #dd5757;
+}
 </style>`);
 
             $("div.divp").parent().css("overflow", "clip visible");
@@ -268,10 +272,14 @@
                 }
 
                 const isStep = $tds.eq(3).children(".skillact").children("span:first").html() === "【S】";
+                const isAuto = $tds.eq(3).children(".skillact").contents().eq(1).text().startsWith("自動:");
 
                 const $index = $tds.eq(0).clone();
                 if (isStep) {
                     $index.children(".marks.marki0").addClass("stepskill");
+                }
+                if (isAuto) {
+                    $index.children(".marks.marki0").addClass("autoskill");
                 }
                 const skillNameHTML = $tds.eq(2).html();
                 const innerHTML = $index.html() + type + skillNameHTML;
@@ -279,12 +287,12 @@
                 const skillNum = $tds.eq(0).children(".marks.marki0").html() || "";
                 const skillName = $tds.eq(2).text();
                 const skillUsableCount = $tds.eq(4).text();
-                const queryTarget = `(${skillNum})${typeName ? `【${typeName}】` : ""}${skillName}${isStep ? "【S】" : ""}[${skillUsableCount}]`;
+                const queryTarget = `(${skillNum})${typeName ? `【${typeName}】` : ""}${skillName}${isAuto ? "【自動】【A】" : ""}${isStep ? "【S】" : ""}[${skillUsableCount}]`;
                 const placeholder = `(${skillNum})${typeName ? `【✿${typeName}】` : ""}${skillName}`;
 
                 const skillid = $tds.eq(1).attr("id").substr(4);
 
-                return `<li data-skillid="${skillid}" data-querytarget="${queryTarget}" data-placeholder="${placeholder}" data-snum="${skillNum}" data-stype="${typeName}" data-sprop="${skillProp}" data-sname="${skillName}" data-isstep="${isStep}" data-scount="${skillUsableCount}">${innerHTML}</li>`;
+                return `<li data-skillid="${skillid}" data-querytarget="${queryTarget}" data-placeholder="${placeholder}" data-snum="${skillNum}" data-stype="${typeName}" data-sprop="${skillProp}" data-sname="${skillName}" data-isstep="${isStep}" data-isauto="${isAuto}" data-scount="${skillUsableCount}">${innerHTML}</li>`;
             }).get()
             .join("");
 
