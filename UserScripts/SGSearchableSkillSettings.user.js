@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenのスキル名を検索可能にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.2
+// @version     1.0.3
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSearchableSkillSettings.user.js
 // @grant       none
@@ -184,6 +184,7 @@
                 const $baseSelect = $searchable.prev();
                 const $sel = $searchable.find(".searchableselect_sel");
                 $baseSelect.val($(e.currentTarget).data("skillid")).trigger("change");
+                $searchable.find(".searchableselect_val").attr("title", e.currentTarget.title);
                 $searchable.find(".searchableselect_pls").html(e.currentTarget.innerHTML);
                 const index = this.$ul.children("li").index(e.currentTarget);
                 $sel[0].dataset.index = index;
@@ -239,6 +240,8 @@
                 }
             }).on("keyup", (evt) => {
                 this.evtDelayer.setDelay((elem) => this.execFiltering(elem), 150, evt.currentTarget);
+            }).each((i, e) => {
+                e.title = this.$ul.children().eq(skillIdxs[i]).attr("title") || "";
             });
 
             $(document).on("click", (e) => {
@@ -292,7 +295,7 @@
 
                 const skillid = $tds.eq(1).attr("id").substr(4);
 
-                return `<li data-skillid="${skillid}" data-querytarget="${queryTarget}" data-placeholder="${placeholder}" data-snum="${skillNum}" data-stype="${typeName}" data-sprop="${skillProp}" data-sname="${skillName}" data-isstep="${isStep}" data-isauto="${isAuto}" data-scount="${skillUsableCount}">${innerHTML}</li>`;
+                return `<li title="${$tds.eq(3).text()}" data-skillid="${skillid}" data-querytarget="${queryTarget}" data-placeholder="${placeholder}" data-snum="${skillNum}" data-stype="${typeName}" data-sprop="${skillProp}" data-sname="${skillName}" data-isstep="${isStep}" data-isauto="${isAuto}" data-scount="${skillUsableCount}">${innerHTML}</li>`;
             }).get()
             .join("");
 
