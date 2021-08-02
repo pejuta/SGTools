@@ -111,7 +111,7 @@
     }
 
     .${SKILL_ITEM_CLASSNAME} > .${SKILL_ITEM_TOGGLE_CLASSNAME}:after {
-        content: "▼";
+        content: "セリフ▼";
         position: absolute;
         z-index: 1;
         visibility: hidden;
@@ -120,7 +120,7 @@
         display: block;
         top: 0;
         right: 0;
-        padding: 3px 12px;
+        padding: 3px 6px;
         margin: 2px;
         border: 1px #997722 solid;
         border-radius: 3px;
@@ -135,6 +135,10 @@
         opacity: 1;
     }
 
+    .${SKILL_ITEM_CLASSNAME}.serifactive > .${SKILL_ITEM_TOGGLE_CLASSNAME}:after {
+        content: "セリフ▲";
+    }
+
     .skillserif {
         display: block;
         max-height: 0;
@@ -143,7 +147,7 @@
         transition: opacity 0.3s linear, max-height 0s;
     }
 
-    .skillserif.active {
+    .${SKILL_ITEM_CLASSNAME}.serifactive > .skillserif {
         max-height: none;
         opacity: 1;
     }
@@ -156,21 +160,21 @@
                     e.preventDefault();
                     return false;
                 }
-                $(this).find(".skillserif").toggleClass("active");
+                $(this).toggleClass("serifactive");
             });
 
             // enabling toggle buttons
             $(document).on("click", `.${SKILL_ITEM_TOGGLE_CLASSNAME}`, function (e) {
-                $(this).parent(/* "." + SKILL_ITEM_CLASSNAME */).find(".skillserif").toggleClass("active");
+                $(this).parent(/* "." + SKILL_ITEM_CLASSNAME */).toggleClass("serifactive");
             });
 
             // overwriting default toggle event
             let selifIsVisible = false;
             $("#skillseriftoggle").off("click").on("click", function() {
                 if (selifIsVisible) {
-                    $(".skillserif").removeClass("active");
+                    $(`.${SKILL_ITEM_CLASSNAME}`).removeClass("serifactive");
                 } else {
-                    $(".skillserif").addClass("active");
+                    $(`.${SKILL_ITEM_CLASSNAME}`).addClass("serifactive");
                 }
                 selifIsVisible = !selifIsVisible;
             });
