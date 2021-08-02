@@ -441,6 +441,71 @@
         }
     }
 
+    class SkillListMarker {
+        static init() {
+
+            $(document.head).append(
+`<style type="text/css">
+.itemlist tr.marked > td:nth-of-type(3) {
+    font-weight: bold;
+}
+.itemlist tr.marked .marks.marki0 {
+    background-color: #bb0000;
+}
+.itemlist tr.marked.odd {
+    background-color: #fff1c1;
+}
+.itemlist tr.marked.even {
+    background-color: #ffffc1;
+}
+</style>`);
+        }
+
+        constructor($table) {
+            this.$table = $table;
+        }
+
+        enable($selects) {
+            if (!this.$table || this.$table.length === 0) {
+                return;
+            }
+
+            if (!$selects || $selects.length === 0) {
+                return;
+            }
+
+            this.$table.find("tr").slice(1).each((i, e) => {
+                const typeTd = $(e).children("td").get(1);
+                if (!typeTd) {
+                    return;
+                }
+                e.dataset.sid = typeTd.id.substr(4);
+            });
+            $selects.on("change", (e) => {
+                this.update($selects);
+            });
+
+            this.update($selects);
+        }
+
+        update($selects) {
+            if (!$selects || $selects.length === 0) {
+                return;
+            }
+
+            const selectedSids = new Set($selects.map((i, e) => {
+                return e.value
+            }).get());
+
+            this.$table.find("tr").slice(1).removeClass("marked").each((i, e) => {
+                const sid = e.dataset.sid;
+                if (selectedSids.has(sid)) {
+                    e.classList.add("marked");
+                }
+            });
+        }
+    }
+
     class Utils {
         static enableskillCountInfo() {
             $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>");
@@ -586,6 +651,9 @@
 
     SkillTypeCounter.init();
     new SkillTypeCounter().enable($("div.divp").parent("div"));
+
+    SkillListMarker.init();
+    new SkillListMarker($("table#skill")).enable($(".selskill"));
 
     Utils.enableskillCountInfo();
 })();
