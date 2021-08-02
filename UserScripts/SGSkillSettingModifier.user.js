@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.5
+// @version     1.0.5.1
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -140,7 +140,7 @@
     }
 
     .skillserif {
-        display: block;
+        display: block!important;
         max-height: 0;
         overflow: hidden;
         opacity: 0;
