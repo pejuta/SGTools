@@ -551,16 +551,16 @@
                 triggeredTypes.push(mainTypeCls);
             }
 
-            let flowersHTML = "ストロールスキル：<span>";
+            let flowersHTML = "✿ストロールスキル：<span>";
             for (let typ of typeList) {
                 const stype = SkillTypeCounter.classToType[typ.cls];
                 flowersHTML += `<span class="${typ.cls}">【✿${stype}×<b>${typeCountsObj[typ.cls]}</b>】</span>`;
-                if (typ.count >= 4) {
+                if (typ.count >= 4 && typ.cls !== mainTypeCls) {
                     triggeredTypes.push(typ.cls);
                 }
             }
             flowersHTML += "</span>";
-            const typesHTML = "発動予定タイプ：" + triggeredTypes.map(cls => `<b class="${cls}">【✿${SkillTypeCounter.classToType[cls]}】</b>`).join("");
+            const typesHTML = "✿発動予定タイプ：" + triggeredTypes.map(cls => `<b class="${cls}">【✿${SkillTypeCounter.classToType[cls]}】</b>`).join("");
             this.$flowers.html(flowersHTML);
             this.$triggeredTypes.html(typesHTML);
         }
