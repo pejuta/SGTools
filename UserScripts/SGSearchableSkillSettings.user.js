@@ -499,8 +499,10 @@
         static init() {
             $(document.head).append(
 `<style type="text/css">
-.skilltypeinfo {
-
+.skilltypeinfo > p {
+    margin: 4px 10px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.8) 40%, transparent, transparent);
+    border-radius: 3px;
 }
 </style>`);
         }
