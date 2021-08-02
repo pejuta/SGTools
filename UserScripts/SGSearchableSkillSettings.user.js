@@ -506,41 +506,6 @@
         }
     }
 
-    class Utils {
-        static enableskillCountInfo() {
-            $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>");
-            window.reloadSkill = function reloadSkill(){
-                $(".selskill").each((i, e) => {
-                    const $targetSkillDesc = $(e).next(/*desc*/);
-
-                    const skillId = $(e).val();
-                    const $desc = $("#desc" + skillId);
-                    if (!$desc.length) {
-                        $targetSkillDesc.html("").attr("title", "");
-                        return;
-                    }
-
-                    const sdesc = $desc.html();
-                    const stype = $("#type" + skillId).html();
-                    const $countLeft = $desc.next("td");
-                    let scount = "";
-                    if ($countLeft.children().length === 1) {
-                        const $countLeftClone = $countLeft.clone();
-                        $countLeftClone.children().html("[" + $countLeftClone.children().html() + "]");
-                        scount = $countLeftClone.html();
-                    } else {
-                        scount = "[" + $countLeft.html() + "]";
-                    }
-                    scount = `<span class="skillcount">${scount}</span>`;
-
-                    $targetSkillDesc.html(scount + stype + sdesc).attr("title", $desc.text());
-                });
-            };
-
-            window.reloadSkill();
-        }
-    }
-
     class SkillTypeCounter {
         static classToType = Object.freeze({
             type1: "平穏",
@@ -636,6 +601,41 @@
                 return null;
             }
             return "type" + val;
+        }
+    }
+
+    class Utils {
+        static enableskillCountInfo() {
+            $(document.head).append("<style type='text/css'>.skillcount{ display: inline-block; width: 2em; text-align: center; }</style>");
+            window.reloadSkill = function reloadSkill(){
+                $(".selskill").each((i, e) => {
+                    const $targetSkillDesc = $(e).next(/*desc*/);
+
+                    const skillId = $(e).val();
+                    const $desc = $("#desc" + skillId);
+                    if (!$desc.length) {
+                        $targetSkillDesc.html("").attr("title", "");
+                        return;
+                    }
+
+                    const sdesc = $desc.html();
+                    const stype = $("#type" + skillId).html();
+                    const $countLeft = $desc.next("td");
+                    let scount = "";
+                    if ($countLeft.children().length === 1) {
+                        const $countLeftClone = $countLeft.clone();
+                        $countLeftClone.children().html("[" + $countLeftClone.children().html() + "]");
+                        scount = $countLeftClone.html();
+                    } else {
+                        scount = "[" + $countLeft.html() + "]";
+                    }
+                    scount = `<span class="skillcount">${scount}</span>`;
+
+                    $targetSkillDesc.html(scount + stype + sdesc).attr("title", $desc.text());
+                });
+            };
+
+            window.reloadSkill();
         }
     }
 
