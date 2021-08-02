@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.4
+// @version     1.0.4.1
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -101,8 +101,101 @@
     }
 
     const SKILL_ITEM_CLASSNAME = "skillitem";
-    class SortableSkills {
+    const SKILL_ITEM_TOGGLE_CLASSNAME = "skilltglbtn";
+    class TogglableSkillsWrapper {
         static init() {
+            $(document.head).append(
+`<style type="text/css">
+    .${SKILL_ITEM_CLASSNAME} {
+        position: relative;
+    }
+
+    .${SKILL_ITEM_CLASSNAME} > .${SKILL_ITEM_TOGGLE_CLASSNAME}:after {
+        content: "▼";
+        position: absolute;
+        z-index: 1;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s, opacity 0.1s linear;
+        display: block;
+        top: 0;
+        right: 0;
+        padding: 3px 12px;
+        margin: 2px;
+        border: 1px #997722 solid;
+        border-radius: 3px;
+        background-color: #ffdd66;
+        color: #774400;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .${SKILL_ITEM_CLASSNAME}:hover > .${SKILL_ITEM_TOGGLE_CLASSNAME}:after {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .skillserif {
+        display: block;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: opacity 0.3s linear, max-height 0s;
+    }
+
+    .skillserif.active {
+        max-height: none;
+        opacity: 1;
+    }
+
+</style>`);
+
+            // enabling dblclick toggle
+            $(document).on("dblclick", `.${SKILL_ITEM_CLASSNAME}`, function (e) {
+                if ($(e.target).is("input,select")) {
+                    e.preventDefault();
+                    return false;
+                }
+                $(this).find(".skillserif").toggleClass("active");
+            });
+
+            // enabling toggle buttons
+            $(document).on("click", `.${SKILL_ITEM_TOGGLE_CLASSNAME}`, function (e) {
+                $(this).parent(/* "." + SKILL_ITEM_CLASSNAME */).find(".skillserif").toggleClass("active");
+            });
+
+            // overwriting default toggle event
+            let selifIsVisible = false;
+            $("#skillseriftoggle").off("click").on("click", function() {
+                if (selifIsVisible) {
+                    $(".skillserif").removeClass("active");
+                } else {
+                    $(".skillserif").addClass("active");
+                }
+                selifIsVisible = !selifIsVisible;
+            });
+        }
+
+        constructor($container) {
+            this.$container = $container;
+        }
+
+        enable() {
+            this.$container.children("hr").last().insertAfter(this.$container).css({ position: "relative", top: "-8px", left: "10px" });
+            this.$container.children("hr").each((i, e) => {
+                $(e).nextUntil("hr").addBack().wrapAll(`<div class="${SKILL_ITEM_CLASSNAME}"></div>`);
+            });
+            $("." + SKILL_ITEM_CLASSNAME).each((i, e) => {
+                $(`<div class="${SKILL_ITEM_TOGGLE_CLASSNAME}"/>`).appendTo(e);
+                e.dataset.index = i + 1;
+            });
+        }
+    }
+
+    class SortableSkills extends TogglableSkillsWrapper {
+        static init() {
+            super.init();
+
             $(document.head).append(
 `<style type="text/css">
     .${SKILL_ITEM_CLASSNAME} > .marks.marki0 {
@@ -124,37 +217,14 @@
         background-color: rgba(255, 165, 0, 0.3);
     }
 </style>`);
-
-            // enable doubleclick event
-            $(document).on("dblclick", `.${SKILL_ITEM_CLASSNAME}`, function () {
-                $(this).find(".skillserif").toggle();
-            });
-
-            // and overwriting default toggle event
-            let selifIsVisible = false;
-            $("#skillseriftoggle").off("click").on("click", function() {
-                if (selifIsVisible) {
-                    $(".skillserif").hide();
-                } else {
-                    $(".skillserif").show();
-                }
-                selifIsVisible = !selifIsVisible;
-            });
         }
 
         constructor($container) {
-            this.$container = $container;
+            super($container);
         }
 
         enable() {
-            // 0. wrapping
-            this.$container.children("hr").last().insertAfter(this.$container).css({ position: "relative", top: "-8px", left: "10px" });
-            this.$container.children("hr").each((i, e) => {
-                $(e).nextUntil("hr").addBack().wrapAll(`<div class="${SKILL_ITEM_CLASSNAME}"></div>`);
-            });
-            $("." + SKILL_ITEM_CLASSNAME).each((i, e) => {
-                e.dataset.index = i + 1;
-            });
+            super.enable();
 
             // 1. create sortable.js
             Sortable.create(this.$container[0], {
