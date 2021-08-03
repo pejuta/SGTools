@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.5.2
+// @version     1.0.5.3
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -349,7 +349,6 @@
 .searchableselect_sel {
     display: inline-block;
     position: relative;
-    overflow: hidden;
     -webkit-writing-mode: horizontal-tb !important;
     text-rendering: auto;
     letter-spacing: normal;
@@ -365,12 +364,6 @@
     font: 400 13.3333px Arial;
 }
 
-.searchableselect_sel.active {
-    overflow: visible;
-}
-
-.searchableselect_btn {
-}
 .searchableselect_btn:before {
     content: "";
     position: absolute;
@@ -426,6 +419,7 @@
 
 .searchableselect_sel > ul {
     position: relative;
+    display: none;
     z-index: 3;
     overflow-x: hidden;
     overflow-y: scroll;
@@ -437,6 +431,10 @@
     padding-inline-start: 0;
     margin-block-start:  0;
     margin-block-end: 0;
+}
+
+.searchableselect_sel.active > ul {
+    display: block;
 }
 
 .searchableselect_sel > ul > li {
