@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.5.3
+// @version     1.0.5.4
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -77,7 +77,9 @@
                 this.updateSkillLabel($label, $(e.currentTarget));
             });
 
-            this.$select.trigger("change");
+            this.$select.each((i, e) => {
+                e.dispatchEvent(new Event("change"));
+            });
         }
 
         updateSkillLabel($label, /* optional */ $skillSelect) {
@@ -499,7 +501,8 @@
             const $searchable = $(li).closest(".searchableselect");
             const index = this.$searchables.index($searchable);
             const $baseSelect = $searchable.next();
-            $baseSelect.val($(li).data("skillid")).trigger("change");
+            $baseSelect.val($(li).data("skillid"));
+            $baseSelect[0].dispatchEvent(new Event("change"));
             this.rescan(index, true);
         }
 
