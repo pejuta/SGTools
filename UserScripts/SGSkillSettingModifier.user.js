@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.6
+// @version     1.0.6.1
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -336,6 +336,7 @@
 
     const MAX_SHOWN_ON_SELECT = 20;
     const HEIGHT_OF_OPTION_ON_SELECT_PX = 20;
+    const SKILL_SELECT_WIDTH_CORRECTION_PX = 5;
 
     class SearchableSelect {
         static init() {
@@ -471,6 +472,7 @@
 
 .searchableselect_sel .marks.marki0 {
     width: 2.67em;
+    margin-right: 1px;
 }
 
 .searchableselect_sel .marks.marki0.stepskill {
@@ -597,7 +599,7 @@
             this.$ul[0].style.display = "inline-block"; // for width
             this.$sels.css({
                 height: $baseSelects.outerHeight(),
-                width: this.$ul.width(),
+                width: this.$ul.width() + SKILL_SELECT_WIDTH_CORRECTION_PX,
             });
             this.$ul[0].style.display = "";
 
@@ -651,7 +653,7 @@
                     if (this.excludesBaseSkills) {
                         return "";
                     }
-                    type = "<span>　</span>";
+                    type = "<i class='ticon'></i>";
                 } else {
                     typeName = $tds.eq(1).text().substr(2, 2);
                     type = `<i class="ticon ${$tds.eq(1).children()[0].className}" title="${typeName}"></i>`;
