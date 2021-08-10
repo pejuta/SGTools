@@ -490,7 +490,7 @@
     width: 20px;
     height: 20px;
     background-size: 22px 22px;
-    background-position: top -1px left -1px;
+    background-position: center;
     background-repeat: no-repeat;
 }
 .ticon.type1:before {background-image: url(/img/type/1.png);}
