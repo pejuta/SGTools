@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.5.4
+// @version     1.0.6
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -480,6 +480,35 @@
 .searchableselect_sel .marks.marki0.autoskill {
     background-color: #dd5757;
 }
+
+.ticon {
+    vertical-align: top;
+}
+.ticon:before {
+    display: inline-block;
+    content: "";
+    width: 20px;
+    height: 20px;
+    background-size: 22px 22px;
+    background-position: top -1px left -1px;
+    background-repeat: no-repeat;
+}
+.ticon.type1:before {background-image: url(/img/type/1.png);}
+.ticon.type2:before {background-image: url(/img/type/2.png);}
+.ticon.type3:before {background-image: url(/img/type/3.png);}
+.ticon.type4:before {background-image: url(/img/type/4.png);}
+.ticon.type5:before {background-image: url(/img/type/5.png);}
+.ticon.type6:before {background-image: url(/img/type/6.png);}
+.ticon.type7:before {background-image: url(/img/type/7.png);}
+.ticon.type8:before {background-image: url(/img/type/8.png);}
+.ticon.type9:before {background-image: url(/img/type/9.png);}
+.ticon.type10:before {background-image: url(/img/type/10.png);}
+.ticon.type11:before {background-image: url(/img/type/11.png);}
+.ticon.type12:before {background-image: url(/img/type/12.png);}
+.ticon.type13:before {background-image: url(/img/type/13.png);}
+.ticon.type14:before {background-image: url(/img/type/14.png);}
+.ticon.type15:before {background-image: url(/img/type/15.png);}
+.ticon.type16:before {background-image: url(/img/type/16.png);}
 </style>`);
 
             $("div.divp").parent().css("overflow", "clip visible");
@@ -625,7 +654,7 @@
                     type = "<span>　</span>";
                 } else {
                     typeName = $tds.eq(1).text().substr(2, 2);
-                    type = `<span class="${$tds.eq(1).children()[0].className}" title="${typeName}">✿</span>`;
+                    type = `<i class="ticon ${$tds.eq(1).children()[0].className}" title="${typeName}"></i>`;
                     skillProp = $tds.eq(2).children("span:first").html();
                 }
 
@@ -894,13 +923,13 @@
             let flowersHTML = "✿ストロールスキル：<span>";
             for (let typ of typeList) {
                 const stype = SkillTypeCounter.classToType[typ.cls];
-                flowersHTML += `<span class="${typ.cls}">【✿${stype}×<b>${typeCountsObj[typ.cls]}</b>】</span>`;
+                flowersHTML += `<span class="${typ.cls}">【<i class="ticon ${typ.cls}"></i>${stype}×<b>${typeCountsObj[typ.cls]}</b>】</span>`;
                 if (typ.count >= 4 && typ.cls !== mainTypeCls) {
                     triggeredTypes.push(typ.cls);
                 }
             }
             flowersHTML += "</span>";
-            const typesHTML = "✿発動予定タイプ：" + triggeredTypes.map(cls => `<b class="${cls}">【✿${SkillTypeCounter.classToType[cls]}】</b>`).join("");
+            const typesHTML = "✿発動予定タイプ：" + triggeredTypes.map(cls => `<b class="${cls}">【<i class="ticon ${cls}"></i>${SkillTypeCounter.classToType[cls]}】</b>`).join("");
             this.$flowers.html(flowersHTML);
             this.$triggeredTypes.html(typesHTML);
         }
