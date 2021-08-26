@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description チャットレスの返信先忘れを予防してくれるかもしれない
 // @include     http://st.x0.to/?mode=chat&list=3&*
-// @version     1.0.0
+// @version     1.0.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGConfirmIfNoResTargetIsSpecified.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGConfirmIfNoResTargetIsSpecified.user.js
 // @grant       none
@@ -15,7 +15,7 @@
         if ($("#replyarea").children().length) {
             return true;
         }
-        if(confirm("返信先が指定されていませんが、本当に発言しますか？")) {
+        if(confirm("返信先メッセージが指定されていませんが、本当に発言しますか？")) {
             return true;
         }
         return false;
