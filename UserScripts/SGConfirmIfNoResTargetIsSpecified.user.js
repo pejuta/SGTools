@@ -30,7 +30,7 @@
     $text.closest("form").find("input[type='submit']").on("click", (e) => {
         if (!confirmIfNoResTargetSpecified()) {
             e.preventDefault();
-        };
+        }
     });
 
     $text.closest("form").find("input[type='text']").on("keydown", (e) => {
