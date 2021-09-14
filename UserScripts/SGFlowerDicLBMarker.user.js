@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        SGFlowerDicLBMarker
 // @namespace   https://twitter.com/11powder
-// @description 花図鑑で上限突破した花を簡単に確認できるようにする。
+// @description 簡易花図鑑で上限突破した花を簡単に確認できるようにする。
 // @match       http://st.x0.to/?mode=zukan2*
 // @version     1.0.0
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js
