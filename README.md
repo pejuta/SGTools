@@ -8,6 +8,9 @@
 - [SGEmphasizeNewFavs](https://pejuta.github.io/SGTools/UserScripts/SGEmphasizeNewFavs.user.js)
 > お気に入りが増えたときに、誰が増えたのかをハイライト表示するようにする。
 
+- [SGFlowerDicLBMarker.user.js](https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js)
+> 花図鑑で上限突破した花の確認を容易にする。
+
 ### 各種行動
 - [SGActionCharaSelector](https://pejuta.github.io/SGTools/UserScripts/SGActionCharaSelector.user.js)
 > 行動に連れ出す人のスキル構成が見えるようになる。  
