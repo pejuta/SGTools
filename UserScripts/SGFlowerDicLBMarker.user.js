@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description 花図鑑の上限突破を簡単に確認できるようにしたり、モード変更を簡単にしたりする。
 // @match       http://st.x0.to/?mode=zukan*
-// @version     1.0.1
+// @version     1.0.2
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js
 // @grant       none
@@ -75,6 +75,9 @@
         appendSimpleDicButton();
 
         $(".profile ~ .framearea").children("p:first-of-type").children("a:first-of-type").on("click", (e) => {
+            if (e.ctrlKey || e.shiftKey || e.altKey) {
+                return;
+            }
             e.preventDefault();
             switchDicModes(e.currentTarget);
         });
@@ -155,10 +158,16 @@
 
     appendSimpleDicButton();
 
-    $(".profile ~ .framearea").children("p:first-of-type").children("a:first-of-type").one("click", async (e) => {
+    const $switchDicA = $(".profile ~ .framearea").children("p:first-of-type").children("a:first-of-type");
+    const loadAnotherFrameThenSwitch = async (e) => {
+        if (e.ctrlKey || e.shiftKey || e.altKey) {
+            return;
+        }
         e.preventDefault();
+        $switchDicA.off("click", loadAnotherFrameThenSwitch);
         await loadThenSwitchDicModes();
-    });
+    };
+    $switchDicA.on("click", loadAnotherFrameThenSwitch);
 
     $(document).on("click", ".profile ~ .framearea > .talkarea > img", async (evt) => {
         const $thisFlower = $(evt.currentTarget).parent(".talkarea");
