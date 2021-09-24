@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description 花図鑑の上限突破を簡単に確認できるようにしたり、モード変更を簡単にしたりする。
 // @match       http://st.x0.to/?mode=zukan*
-// @version     1.0.4
+// @version     1.0.4.1
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js
 // @grant       none
@@ -50,12 +50,16 @@
     }
 
     .charaframe2 > .flevels {
-        display: block;
+        display: none;
         position: absolute;
         right: 1px;
         bottom: -3px;
         font-size: 12px;
         font-weight: normal;
+    }
+
+    .highlightlb .charaframe2 > .flevels {
+        display: block;
     }
 
     .highlightlb .charaframe2.flowerlb {
