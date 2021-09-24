@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description 花図鑑の上限突破を簡単に確認できるようにしたり、モード変更を簡単にしたりする。
 // @match       http://st.x0.to/?mode=zukan*
-// @version     1.0.3.1
+// @version     1.0.4
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGFlowerDicLBMarker.user.js
 // @grant       none
@@ -40,6 +40,8 @@
             }
 
             this._vdoc = document.implementation.createHTMLDocument();
+
+            this.$fTooltip = $(`<div id="ftooltip"/>`).appendTo(document.body);
 
             $(document.head).append(
 `<style type="text/css">
@@ -89,6 +91,18 @@
         color: #774400;
         font-weight: bold;
         cursor: pointer;
+    }
+
+    #ftooltip {
+        display: block;
+        position: absolute;
+        width: 600px;
+        pointer-events: none;
+    }
+
+    #ftooltip > .talkarea {
+        background: white;
+        border: 1px #996633 dashed;
     }
 </style>`
             );
@@ -198,6 +212,8 @@
                 this.extractSimpleFlowerNames();
             }
 
+            this.enableDetailedFlowerTooltip();
+
             return true;
         }
 
@@ -228,10 +244,47 @@
             if ($lastBrToInsertBefore.length === 0) {
                 return;
             }
-            $("<span id='showlbbtn'>レベル表示切り替え</span>").insertBefore($lastBrToInsertBefore).on("click", async () => {
+            $("<span id='showlbbtn'>図鑑情報拡張・表示切り替え</span>").insertBefore($lastBrToInsertBefore).on("click", async () => {
                 await this.loadAnotherFrame();
                 this.applyLBStyleOnSimpleFlowers();
             });
+        }
+
+        enableDetailedFlowerTooltip() {
+            if (!(this.$detailed && this.$simple && this.$fTooltip && this.flowers)) {
+                return;
+            }
+
+            const $detailedFlowers = this.$detailed.children(".talkarea");
+
+            $(document).on("mousemove", ".profile ~ .framearea > .frameareab > div > .charaframe2", (e) => {
+                const $sFlower = $(e.currentTarget);
+                const name = Flower.getNameFromSimple($sFlower);
+
+                const detailedFlowerIndex = this.flowers.findIndex(x => x.name === name);
+                if (detailedFlowerIndex === -1) {
+                    this.$fTooltip.hide();
+                    return;
+                }
+
+                const $dFlower = $detailedFlowers.eq(detailedFlowerIndex);
+
+                let left = e.pageX;
+                let top = e.pageY;
+                if (e.clientX + this.$fTooltip.width() > window.innerWidth && e.clientX * 2 > window.innerWidth) {
+                    // はみ出る、かつマウスカーソルが中央より右にある時にツールチップをマウスカーソルの左に表示
+                    left = e.pageX - this.$fTooltip.width();
+                }
+                if (e.clientY + this.$fTooltip.height() > window.innerHeight && e.clientY * 2 > window.innerHeight) {
+                    // はみ出る、かつマウスカーソルが中央より下にある時にツールチップをマウスカーソルの左に表示
+                    top = e.pageY - this.$fTooltip.height();
+                }
+
+                this.$fTooltip.empty().append($dFlower.clone()).css({ left, top }).show();
+            }).on("mouseleave", ".profile ~ .framearea > .frameareab > div > .charaframe2", (e) => {
+                this.$fTooltip.hide();
+            });
+
         }
 
         buildFlowers() {
