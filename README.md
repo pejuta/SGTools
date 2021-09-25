@@ -51,6 +51,6 @@
 > ※新版と旧版を同時に使用しないでください。  
 
 ## ブックマークレット
-https://github.com/pejuta/SGTools/tree/main/UserScripts/bml
-上記ユーザースクリプトのブックマークレット版を別途用意しています。
-手順は省略しますが、ユーザースクリプトの使用できない環境等ではこちらをご利用ください。
+https://github.com/pejuta/SGTools/tree/main/UserScripts/bml  
+上記ユーザースクリプトのブックマークレット版を別途用意しています。  
+手順は省略しますが、ユーザースクリプトの使用できない環境等ではこちらをご利用ください。  
