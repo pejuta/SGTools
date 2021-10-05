@@ -3,13 +3,12 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.6.2
+// @version     1.0.7
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @grant       none
 // ==/UserScript==
-
 
 (() => {
     "use strict";
@@ -527,7 +526,8 @@
                 const $sel = $(e.currentTarget).closest(".searchableselect_sel");
                 this.deactivateSelect($sel);
             });
-            this.evtDelayer = new Delayer();
+            this.searchEvtDelayer = new Delayer();
+            this.rescanDelayer = new Delayer();
         }
 
         applySelected(li) {
@@ -617,7 +617,7 @@
                     e.preventDefault();
                 }
             }).on("keyup", (evt) => {
-                this.evtDelayer.setDelay((elem) => this.execFiltering(elem), 150, evt.currentTarget);
+                this.searchEvtDelayer.setDelay((elem) => this.execFiltering(elem), 150, evt.currentTarget);
             });
 
             $(document).on("click", (e) => {
@@ -626,7 +626,9 @@
                 }
             });
 
-            $baseSelects.hide();
+            $baseSelects.hide().on("change", (e) => {
+                this.rescanDelayer.setDelay(() => this.rescanAll(), 150);
+            });
 
             $(".swap").on("click", (e) => {
                 const sindex = $(e.currentTarget).data("index");
@@ -982,6 +984,311 @@
         }
     }
 
+    class TextIO {
+        constructor(mime) {
+            this.mime = mime || "text/plain";
+        }
+
+        init() {
+            const ths = this;
+            this.$dlAnchor = $("<a/>").css("display", "none").appendTo(document.body);
+            this.$dlButton = $("<input type='file'>")
+                            .attr("accept", this.mime)
+                            .css("display", "none")
+                            .appendTo(document.body);
+        }
+
+        export(content, filename) {
+            const blob = new Blob([content], { type : this.mime });
+            const file = new File([blob], filename);
+            const anchorElem = this.$dlAnchor[0];
+            // location.href =  URL.createObjectURL(file);
+            anchorElem.href =  URL.createObjectURL(file);
+            anchorElem.download = filename;
+            anchorElem.click();
+        }
+
+        async import() {
+            return new Promise((resolve, reject) => {
+                if (!this.$dlButton) {
+                    reject("haven't initialized yet.");
+                    return;
+                }
+
+                this.$dlButton.one("change", async function() {
+                    try {
+                        const files = this.files;
+                        if (!files || files.length === 0) {
+                            return;
+                        }
+
+                        const res = await new Response(files[0]);
+                        const content = await res.text();
+                        this.value = "";
+
+                        resolve(content);
+                    } catch {
+                        reject("IO Exception maybe.");
+                    }
+                })[0].click();
+            });
+
+        }
+    }
+
+    class SkillItem {
+        constructor(condId, skillId, skillName, iconUrl, serifBody) {
+            this.condId = condId;
+            this.skillId = skillId;
+            this.skillName = skillName;
+            this.iconUrl = iconUrl;
+            this.serifBody = serifBody;
+        }
+    }
+
+    class SkillSettingData {
+        constructor(title, mainTypeId, columnId, skills, connectSkillId, emitSkillId) {
+            this.title = title;
+            this.mainTypeId = mainTypeId;
+            this.columnId = columnId;
+            this.skills = skills;
+            this.connectSkillId = connectSkillId;
+            this.emitSkillId = emitSkillId;
+        }
+    }
+
+    function selectOptionsToArray(select) {
+        return $(select).children("option").map((i, e) => e.value).get();
+    }
+
+    function removeInvalidCharacterFromFilename(filename) {
+        return filename.replace(/[<>:"\/\\|?*]/, "");
+    }
+
+    const MAX_SKILLS_COUNT = 16;
+    class SkillIO {
+        static init() {
+            SkillIO.io = new TextIO("application/json");
+            SkillIO.io.init();
+
+            $(document.head).append(
+`<style type='text/css'>
+    h2.subtitle {
+        position: relative;
+    }
+
+    .ssfileio {
+        position: absolute;
+        right: 0;
+        bottom: 1px;
+        width: 200px;
+        font-size: 14px;
+        text-align: center;
+        color: #993300;
+        background-color: #fffef8;
+    }
+
+    .ssexport {
+        display: inline-block;
+        margin: 0;
+        width: 100px;
+        background-color: #ffdd77;
+        cursor: pointer;
+    }
+
+    .ssimport {
+        display: inline-block;
+        margin: 0;
+        width: 100px;
+        background-color: #bbddff;
+        cursor: pointer;
+    }
+</style>`);
+        }
+
+        constructor() {
+            // 1 or 2; must validate
+            this.$column = $("select[name='line']");
+            // default: empty
+            this.$mainType = $("#s_type");
+            this.$connectSkill = $("select[name='connectno']");
+            this.$emitSkill = $("select[name='emitno']");
+
+            this.$skills = $("span.skilldesc").prev("select[name^=skill]");
+            this.$sconds = $("span.marks.marki0 + select[name^=scond]");
+            this.$icons = $("select[name^=icon");
+            this.$serifs = $("input[type='text'][name^=serif");
+            if (!(this.$mainType.length && this.$column.length &&
+                  this.$connectSkill.length && this.$emitSkill.length &&
+                  this.$skills.length && this.$sconds.length &&
+                  this.$icons.length && this.$serifs.length)) {
+                throw new Error("invalid operation: missedelement");
+            }
+
+            this.skillsCount = this.$sconds.length;
+            if (![this.$skills.length, this.$sconds.length, this.$icons.length, this.$serifs.length].every((x) => x === this.skillsCount)) {
+                throw new Error("invalid operation: skillscount");
+            }
+
+            this.typeIds = new Set(selectOptionsToArray(this.$mainType.eq(0)));
+            this.conditionIds = new Set(selectOptionsToArray(this.$sconds.eq(0)));
+            this.skillIds  = new Set(selectOptionsToArray(this.$skills.eq(0)));
+            this.iconUrls = new Set(selectOptionsToArray(this.$icons.eq(0)));
+        }
+
+        enable() {
+            $("<div class='ssfileio'>戦闘設定のファイル管理<div class='ssexport'>出力(保存)</div><div class='ssimport'>入力</div></div>")
+                .appendTo($("h2.subtitle"));
+
+            $(".ssexport").on("click", () => this.export());
+            $(".ssimport").on("click", async () => await this.import());
+        }
+
+        async import() {
+            try {
+                const json = await SkillIO.io.import();
+                const data = JSON.parse(json);
+                const hasMissedAnySkills = this._applyData(data);
+                this._triggerChangeEvents();
+                let message = "入力が完了しました。";
+                if (hasMissedAnySkills) {
+                    message += "\n一部スキルが存在しないため、設定を完全に復元することができませんでした。";
+                }
+                alert(message);
+            } catch(e) {
+                alert(`入力に失敗しました。[${e.message || ""}]`);
+            }
+        }
+
+        export() {
+            const dat = new Date();
+            const dateText = dat.getFullYear().toString().slice(-2) + ("00" + dat.getMonth()).slice(-2) + ("00" + dat.getDate()).slice(-2);
+
+            const title = prompt("保存する戦闘設定のタイトルを入力することができます。（オプション）", dateText);
+            if (title === null) {
+                return;
+            }
+
+
+            const data = this._buildData(title);
+            const json = JSON.stringify(data, null, 4);
+            const filename = `sgskill_${removeInvalidCharacterFromFilename(title) || dateText}.json`;
+            SkillIO.io.export(json, filename);
+        }
+
+        _buildData(title) {
+            const columnId = this.$column.val();
+            const mainTypeId = this.$mainType.val();
+            const connectSkillId = this.$connectSkill.val();
+            const emitSkillId = this.$emitSkill.val();
+
+            const skills = [];
+            for (let si = 0; si < this.skillsCount; si++) {
+                const $s = this.$skills.eq(si);
+                const $sc = this.$sconds.eq(si);
+                const $ic = this.$icons.eq(si);
+                const $srf = this.$serifs.eq(si);
+                const [condId, skillId, skillName, iconUrl, serifBody] = [$sc.val(), $s.val(), $s.children("option:selected").html(), $ic.val(), $srf.val()];
+                skills.push(new SkillItem(condId, skillId, skillName, iconUrl, serifBody));
+            }
+
+            return new SkillSettingData(title, mainTypeId, columnId, skills, connectSkillId, emitSkillId);
+        }
+
+        _applyData(data) {
+            const errMessage = this._validateData(data);
+            if (errMessage) {
+                throw new Error(errMessage);
+            }
+
+            this.$column.val(data.columnId);
+            this.$mainType.val(data.mainTypeId);
+            this.$connectSkill.val(data.connectSkillId);
+            this.$emitSkill.val(data.emitSkillId);
+
+            const hasAnyMissedSkills = !data.skills.every(x => this.skillIds.has(x.skillId));
+
+            for (let si = 0; si < this.skillsCount; si++) {
+                if (si >= data.skills.length || !this.skillIds.has(data.skills[si].skillId)) {
+                    // fillempty
+                    this.$skills.eq(si).val("0");
+                    this.$sconds.eq(si).val("0");
+                    this.$serifs.eq(si).val("");
+                    continue;
+                }
+
+                const skill = data.skills[si];
+                this.$skills.eq(si).val(skill.skillId);
+                this.$sconds.eq(si).val(skill.condId);
+                this.$serifs.eq(si).val(skill.serifBody);
+            }
+
+            for (let si = 0; si < this.skillsCount; si++) {
+                if (si >= data.skills.length || !this.skillIds.has(data.skills[si].skillId) || !this.iconUrls.has(data.skills[si].iconUrl)) {
+                    // fillempty
+                    this.$icons.eq(si).val("-1");
+                } else {
+                    this.$icons.eq(si).val(data.skills[si].iconUrl);
+                }
+            }
+
+            return hasAnyMissedSkills;
+        }
+
+        _triggerChangeEvents() {
+            this.$skills.each((i, e) => e.dispatchEvent(new Event("change")));
+            this.$sconds.each((i, e) => e.dispatchEvent(new Event("change")));
+            this.$serifs.each((i, e) => e.dispatchEvent(new Event("change")));
+            this.$icons .each((i, e) => e.dispatchEvent(new Event("change")));
+            this.$column[0]      .dispatchEvent(new Event("change"));
+            this.$mainType[0]    .dispatchEvent(new Event("change"));
+            this.$connectSkill[0].dispatchEvent(new Event("change"));
+            this.$emitSkill[0]   .dispatchEvent(new Event("change"));
+        }
+
+        _validateData(data) {
+            if (!data) {
+                return "argument not given";
+            }
+
+            if (!["1", "2"].some(x => x === data.columnId)) {
+                return "invalid column";
+            }
+
+            if (!data.skills || data.skills.length === 0 || data.skills.length > this.skillsCount) {
+                return "invalid skills count";
+            }
+
+            if (!this.typeIds.has(data.mainTypeId)) {
+                return "not-enabled type";
+            }
+
+            if (!data.skills.every(x => this.conditionIds.has(x.condId))) {
+                return "not-enabled skill condition";
+            }
+
+            // if (!data.skills.every(x => this.skillIds.has(x.skillId))) {
+            //     return "not owned skill";
+            // }
+
+            const connectSkillN = parseInt(data.connectSkillId || "0", 10);
+            if (connectSkillN < 0 || connectSkillN > this.skillsCount)  {
+                return "invalid connect-skill";
+            }
+
+            const emitSkillN = parseInt(data.emitSkillId || "0", 10);
+            if (emitSkillN < 0 || emitSkillN > this.skillsCount) {
+                return "invalid emit-skill";
+            }
+
+            return "";
+        }
+
+        _hasSkillId(id) {
+            return this.skillIds.has(id)
+        }
+    }
+
     SkillSelectChaser.init();
     const $connectno = $("select[name='connectno']");
     const $emmitno = $("select[name='emitno']");
@@ -1010,4 +1317,7 @@
     new SkillListMarker($("table#skill")).enable($(".selskill"));
 
     Utils.enableskillCountInfo();
+
+    SkillIO.init()
+    new SkillIO().enable();
 })();
