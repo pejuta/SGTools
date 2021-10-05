@@ -3,7 +3,7 @@
 // @namespace   https://twitter.com/11powder
 // @description Stroll Greenの戦闘設定を快適にする
 // @include     /^http:\/\/st\.x0\.to\/?(?:\?mode=keizoku1(&.*)?)?$/
-// @version     1.0.7
+// @version     1.0.7.1
 // @require     https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js
 // @updateURL   https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
 // @downloadURL https://pejuta.github.io/SGTools/UserScripts/SGSkillSettingModifier.user.js
@@ -1145,19 +1145,21 @@
         }
 
         async import() {
+            let message;
             try {
                 const json = await SkillIO.io.import();
                 const data = JSON.parse(json);
                 const hasMissedAnySkills = this._applyData(data);
                 this._triggerChangeEvents();
-                let message = "入力が完了しました。";
+                message = "入力が完了しました。";
                 if (hasMissedAnySkills) {
                     message += "\n一部スキルが存在しないため、設定を完全に復元することができませんでした。";
                 }
-                alert(message);
             } catch(e) {
-                alert(`入力に失敗しました。[${e.message || ""}]`);
+                message = `入力に失敗しました。[${e.message || ""}]`;
             }
+
+            alert(message);
         }
 
         export() {
